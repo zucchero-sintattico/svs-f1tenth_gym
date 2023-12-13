@@ -22,7 +22,7 @@ class F110GymBase:
         self.env  = gym.make('f110_gym:f110-v0', map=conf.map_path, map_ext=conf.map_ext, num_agents=1, timestep=timestep, integrator=Integrator.RK4)
         self.obs, self.step_reward, self.done, self.info = self.env.reset(np.array([[conf.sx, conf.sy, conf.stheta]]))
         self.env.render()
-
+        self.conf = conf
         self.lap_time = 0.
         self.planning_strategy = planning_strategy
 
@@ -38,6 +38,9 @@ class F110GymBase:
 
             # stepping through the environment
             self.obs, self.step_reward, self.done, self.info = self.env.step(actions)
+
+            if self.done:
+                self.obs, self.step_reward, self.done, self.info = self.env.reset(np.array([[self.conf.sx, self.conf.sy, self.conf.stheta]]))
 
             self.env.render(mode='human')
 
