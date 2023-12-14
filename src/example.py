@@ -12,13 +12,16 @@ with open('src/map/example_map/config_example_map.yaml') as file:
 
 class CustomPlanningStrategy(PlanningStrategy):
     def plan(self, observation):
+
+        #print(observation['scans'][0], len(observation['scans'][0]))
+
         action = np.array([[0., 0.8]])
         return action
 
 
 map = 'example_map'
 num_agents = 1
-timestep = 0.01
+timestep = 0.0001
 custom_strategy = CustomPlanningStrategy()
 
 f110_gym = F110GymBase.F110GymBase(map, num_agents, conf, custom_strategy, timestep)
