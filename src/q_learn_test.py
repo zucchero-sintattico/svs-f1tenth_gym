@@ -66,26 +66,18 @@ class ReplayMemory(object):
 
 class DQN(nn.Module):
 
-    #net return a value bitween -1 and 1
-
     def __init__(self, n_observations, n_actions):
         super(DQN, self).__init__()
-        self.layer1 = nn.Linear(n_observations, 16)
-        self.layer2 = nn.Linear(16, 16)
-        self.layer3 = nn.Linear(16, n_actions)
-
-        init.xavier_uniform_(self.layer1.weight)
-        init.xavier_uniform_(self.layer2.weight)
-        init.xavier_uniform_(self.layer3.weight)
+        self.layer1 = nn.Linear(n_observations, 128)
+        self.layer2 = nn.Linear(128, 128)
+        self.layer3 = nn.Linear(128, n_actions)
 
     # Called with either one element to determine next action, or a batch
     # during optimization. Returns tensor([[left0exp,right0exp]...]).
-    def forward(self, x): 
+    def forward(self, x):
         x = F.relu(self.layer1(x))
         x = F.relu(self.layer2(x))
-        #x = torch.tanh(self.layer3(x))
-        x = self.layer3(x)
-        return x
+        return self.layer3(x)
 
 
 policy_net = DQN(n_observations, n_actions).to(device)
@@ -187,9 +179,11 @@ class CustomPlanningStrategy(PlanningStrategy):
             else:
                 reward = 0.1
 
+            next_state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
+
         reward = torch.tensor([reward], device=device)
 
-        next_state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
+        
 
         memory.push(state, action, next_state, reward)
         
