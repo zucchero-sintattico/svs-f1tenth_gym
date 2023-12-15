@@ -53,9 +53,9 @@ class DQN(nn.Module):
 
     def __init__(self, n_observations, n_actions):
         super(DQN, self).__init__()
-        self.layer1 = nn.Linear(n_observations, 512)
-        self.layer2 = nn.Linear(512, 512)
-        self.layer3 = nn.Linear(512, n_actions)
+        self.layer1 = nn.Linear(n_observations, 128)
+        self.layer2 = nn.Linear(128, 128)
+        self.layer3 = nn.Linear(128, n_actions)
 
     # Called with either one element to determine next action, or a batch
     # during optimization. Returns tensor([[left0exp,right0exp]...]).
@@ -68,7 +68,7 @@ class DQN(nn.Module):
 
 
 
-BATCH_SIZE = 64
+BATCH_SIZE = 32
 GAMMA = 0.99
 EPS_START = 0.9
 EPS_END = 0.05
@@ -76,7 +76,7 @@ EPS_DECAY = 1000
 TAU = 0.005
 LR = 1e-4
 
-action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(1,), dtype=np.float32)
+action_space = gym.spaces.Box(low=-0.5, high=0.5, shape=(1,), dtype=np.float32)
 print("action_space", action_space)
 
 n_actions = 1
@@ -87,7 +87,7 @@ target_net = DQN(n_observations, n_actions).to(device)
 target_net.load_state_dict(policy_net.state_dict())
 
 optimizer = optim.AdamW(policy_net.parameters(), lr=LR, amsgrad=True)
-memory = ReplayMemory(10000)
+memory = ReplayMemory(100000)
 steps_done = 0
 
 
@@ -102,13 +102,13 @@ def select_action(state):
             # t.max(1) will return the largest column value of each row.
             # second column on max result is index of where max element was
             # found, so we pick action with the larger expected reward.
-
-            return policy_net(state)
+            values = policy_net(state)
+            return values
+            
     else:
 
         random_action = np.array([action_space.sample()], dtype=np.float32)
         return torch.tensor(random_action, device=device, dtype=torch.float32)
-
 
 
 
@@ -172,7 +172,7 @@ first_obs, _ , _, _ = gat_first_env_state.env.reset(np.array([[conf.sx, conf.sy,
 
 old_y = 0
 
-state = torch.tensor(first_obs['scans'], device=device, dtype=torch.float32)
+state = torch.tensor(first_obs['scans'][0], device=device, dtype=torch.float32).unsqueeze(0)
 action = select_action(state.clone().detach())
 
 class CustomPlanningStrategy(PlanningStrategy):
@@ -180,32 +180,42 @@ class CustomPlanningStrategy(PlanningStrategy):
         global steps_done
         global old_y
         global state   
-        global action     
+        global action    
+
+        action = select_action(state) 
 
 
 
 
         if observation["lap_times"] == timestep and steps_done > 1:
-            reward = -1000
+            reward = -10
             #print("collision")
-            next_state = None
+            #next_state = None
+            steps_done = 0
         else:
-            reward = 0.02
-            next_state = state
+            reward = 5
+            
+            
             #se una delle scansioni è minore di 0.5
             if min(observation["scans"][0]) < 0.5:
-                reward = -100
+                reward = 0
+        next_state = torch.tensor(observation['scans'][0], device=device, dtype=torch.float32).unsqueeze(0)
+
+        #print("reward", reward)
             # if old_y > observation["poses_y"][0]:
             #     reward = -10
 
         old_y = observation["poses_y"][0]
 
         reward = torch.tensor([reward], device=device)
-
-
+       
         memory.push(state, action.max(1).indices.view(1, 1), next_state, reward)
+
+        
         
         state = next_state
+        
+        
 
         # Perform one step of the optimization (on the policy network)
 
@@ -219,8 +229,8 @@ class CustomPlanningStrategy(PlanningStrategy):
             target_net_state_dict[key] = policy_net_state_dict[key]*TAU + target_net_state_dict[key]*(1-TAU)
         target_net.load_state_dict(target_net_state_dict)
 
-        state = torch.tensor(observation['scans'], device=device, dtype=torch.float32)
-        action = select_action(state.clone().detach())
+        
+        
       
         #print("action", action)
         return  np.array([[action.item(),1.5]]) 
