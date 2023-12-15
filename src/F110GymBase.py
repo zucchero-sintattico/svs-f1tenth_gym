@@ -16,7 +16,7 @@ class DefaultPlanningStrategy(PlanningStrategy):
 
 class F110GymBase:
 
-    def __init__(self, map, num_agents, conf, planning_strategy, timestep=0.001):
+    def __init__(self, map, num_agents, conf, planning_strategy, timestep=0.01):
         self.map = map
         self.num_agents = num_agents
         self.env  = gym.make('f110_gym:f110-v0', map=conf.map_path, map_ext=conf.map_ext, num_agents=1, timestep=timestep, integrator=Integrator.RK4)
@@ -39,11 +39,9 @@ class F110GymBase:
             # stepping through the environment
             self.obs, self.step_reward, self.done, self.info = self.env.step(actions)
 
-            
-
-
             if self.done:
                 self.obs, self.step_reward, self.done, self.info = self.env.reset(np.array([[self.conf.sx, self.conf.sy, self.conf.stheta]]))
+                
 
             self.env.render(mode='human')
 
