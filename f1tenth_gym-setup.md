@@ -1,6 +1,6 @@
-# F1Tenth Gym Environment Setup
+# F1Tenth Gym Environment Setup
 
-## Install F1Tenth Gym
+## Install F1Tenth Gym
 
 ```bash
 git clone https://github.com/f1tenth/f1tenth_gym
