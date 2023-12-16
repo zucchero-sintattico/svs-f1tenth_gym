@@ -59,17 +59,16 @@ class DQN(nn.Module):
 
     def __init__(self, n_observations, n_actions):
         super(DQN, self).__init__()
-        self.layer1 = nn.Linear(n_observations, 64)
-        self.layer2 = nn.Linear(64, 64)
-        self.layer3 = nn.Linear(64, 64)
-        self.layer4 = nn.Linear(64, n_actions)
+        self.layer1 = nn.Linear(n_observations, 128)
+        self.layer2 = nn.Linear(128, 128)
+        self.layer3 = nn.Linear(128, n_actions)
 
+    # Called with either one element to determine next action, or a batch
+    # during optimization. Returns tensor([[left0exp,right0exp]...]).
     def forward(self, x):
         x = F.relu(self.layer1(x))
         x = F.relu(self.layer2(x))
-        x = F.relu(self.layer3(x))
-        x = torch.tanh(self.layer4(x))  # Adatta il range tra -0.5 e 0.5
-        return x
+        return self.layer3(x)
 
 
 
@@ -82,10 +81,10 @@ EPS_DECAY = 1000
 TAU = 0.005
 LR = 1e-4
 
-action_space = gym.spaces.Box(low=-1, high=1, shape=(1,), dtype=np.float32)
+action_space = gym.spaces.Discrete(4)
 print("action_space", action_space)
 
-n_actions = 1
+n_actions = action_space.n
 n_observations = 1080
 
 policy_net = DQN(n_observations, n_actions).to(device)
@@ -108,13 +107,12 @@ def select_action(state):
             # t.max(1) will return the largest column value of each row.
             # second column on max result is index of where max element was
             # found, so we pick action with the larger expected reward.
-            values = policy_net(state)
-            return values
-            
+            return policy_net(state).max(1).indices.view(1, 1)
     else:
+        return torch.tensor([[action_space.sample()]], device=device, dtype=torch.long)
 
-        random_action = np.array([action_space.sample()], dtype=np.float32)
-        return torch.tensor(random_action, device=device, dtype=torch.float32)
+    
+    
 
 
 
@@ -157,7 +155,7 @@ def optimize_model():
     # Compute Huber loss
     criterion = nn.SmoothL1Loss()
     loss = criterion(state_action_values, expected_state_action_values.unsqueeze(1))
-
+    writer.add_scalar("Loss/train", loss, i_episode)
     # Optimize the model
     optimizer.zero_grad()
     loss.backward()
@@ -171,8 +169,7 @@ env  = gym.make('f110_gym:f110-v0', map=conf.map_path, map_ext=conf.map_ext, num
 
 old_y = 0
 
-num_episodes = 5000
-
+num_episodes = 999999999
 for i_episode in range(num_episodes):
     # Initialize the environment and get it's state
 
@@ -180,20 +177,24 @@ for i_episode in range(num_episodes):
     state = torch.tensor(state["scans"][0], dtype=torch.float32, device=device).unsqueeze(0)
 
     for t in count():
-        action = select_action(state)
-        observation, reward, done, info  = env.step(np.array([[action.item(),1.5]]))
+        action =  select_action(state)
+
+        mapped_action = (action.item() - 2) / 4
+
+
+        observation, reward, done, info  = env.step(np.array([[mapped_action,1.5]]))
 
  
         if min(observation["scans"][0]) < 0.5:
-            reward = -0.01
+            reward = -0.03
 
-        if observation["poses_y"][0] < old_y:
-            reward = -0.02
-        old_y = observation["poses_y"][0]
+        # if observation["poses_y"][0] < old_y:
+        #     reward = -0.02
+        # old_y = observation["poses_y"][0]
 
         reward = torch.tensor([reward], device=device)
 
-        print("reward", reward)
+        #print("reward", reward)
 
 
         if done:
@@ -202,7 +203,7 @@ for i_episode in range(num_episodes):
             next_state = torch.tensor(observation["scans"][0], dtype=torch.float32, device=device).unsqueeze(0)
 
         # Store the transition in memory
-        memory.push(state, action.max(1).indices.view(1, 1), next_state, reward)
+        memory.push(state, action, next_state, reward)
 
         # Move to the next state
         state = next_state
