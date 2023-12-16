@@ -68,7 +68,7 @@ class DQN(nn.Module):
         x = F.relu(self.layer1(x))
         x = F.relu(self.layer2(x))
         x = F.relu(self.layer3(x))
-        x = torch.tanh(self.layer4(x)) * 0.5  # Adatta il range tra -0.5 e 0.5
+        x = torch.tanh(self.layer4(x))  # Adatta il range tra -0.5 e 0.5
         return x
 
 
@@ -82,7 +82,7 @@ EPS_DECAY = 1000
 TAU = 0.005
 LR = 1e-4
 
-action_space = gym.spaces.Box(low=-0.5, high=0.5, shape=(1,), dtype=np.float32)
+action_space = gym.spaces.Box(low=-1, high=1, shape=(1,), dtype=np.float32)
 print("action_space", action_space)
 
 n_actions = 1
