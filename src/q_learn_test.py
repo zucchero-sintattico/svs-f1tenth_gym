@@ -182,32 +182,37 @@ class CustomPlanningStrategy(PlanningStrategy):
         global state   
         global action    
 
+
+        if state is None:
+            state = torch.tensor(first_obs['scans'][0], device=device, dtype=torch.float32).unsqueeze(0)
+            
         action = select_action(state) 
 
 
 
 
         if observation["lap_times"] == timestep and steps_done > 1:
-            reward = -10
+            reward = -100
             #print("collision")
-            #next_state = None
-            steps_done = 0
+            next_state = None
+            #steps_done = 0
         else:
             reward = 5
             
             
             #se una delle scansioni è minore di 0.5
-            if min(observation["scans"][0]) < 0.5:
-                reward = 0
-        next_state = torch.tensor(observation['scans'][0], device=device, dtype=torch.float32).unsqueeze(0)
+            # if min(observation["scans"][0]) < 0.5:
+            #     reward = -(0.5 -min(observation["scans"][0]))*10
+            next_state = torch.tensor(observation['scans'][0], device=device, dtype=torch.float32).unsqueeze(0)
 
         #print("reward", reward)
-            # if old_y > observation["poses_y"][0]:
-            #     reward = -10
+        if old_y > observation["poses_y"][0]:
+            reward = -10
 
         old_y = observation["poses_y"][0]
 
         reward = torch.tensor([reward], device=device)
+        print("reward", reward)
        
         memory.push(state, action.max(1).indices.view(1, 1), next_state, reward)
 
@@ -215,6 +220,8 @@ class CustomPlanningStrategy(PlanningStrategy):
         
         state = next_state
         
+
+
         
 
         # Perform one step of the optimization (on the policy network)
