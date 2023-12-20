@@ -414,6 +414,8 @@ for i_episode in range(num_episodes):
         reward = torch.tensor([reward], device=device)
         done = terminated or truncated
 
+        print("reward", reward)
+
         if terminated:
             next_state = None
         else:
