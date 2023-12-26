@@ -74,26 +74,27 @@ class F110_Wrapped(gym.Wrapper):
         return self.normalise_observations(observation['scans'][0]), reward, bool(done), info
 
     def reset(self, start_xy=None, direction=None):
-        if start_xy is None:
-            start_xy = np.zeros(2)
-        # start in random direction if no direction input
-        if direction is None:
-            direction = np.random.uniform(0, 2 * np.pi)
-        # get slope perpendicular to track direction
-        slope = np.tan(direction + np.pi / 2)
-        # get magintude of slope to normalise parametric line
-        magnitude = np.sqrt(1 + np.power(slope, 2))
-        # get random point along line of width track
-        rand_offset = np.random.uniform(-1, 1)
-        rand_offset_scaled = rand_offset * self.start_radius
+        # if start_xy is None:
+        #     start_xy = np.zeros(2)
+        # # start in random direction if no direction input
+        # if direction is None:
+        #     direction = np.random.uniform(0, 2 * np.pi)
+        # # get slope perpendicular to track direction
+        # slope = np.tan(direction + np.pi / 2)
+        # # get magintude of slope to normalise parametric line
+        # magnitude = np.sqrt(1 + np.power(slope, 2))
+        # # get random point along line of width track
+        # rand_offset = np.random.uniform(-1, 1)
+        # rand_offset_scaled = rand_offset * self.start_radius
 
         # convert position along line to position between walls at current point
-        x, y = start_xy + rand_offset_scaled * np.array([1, slope]) / magnitude
 
         # point car in random forward direction, not aiming at walls
         # t = -np.random.uniform(max(-rand_offset * np.pi / 2, 0) - np.pi / 2,
         #                        min(-rand_offset * np.pi / 2, 0) + np.pi / 2) + direction
-        t = direction
+        t = 1.55
+        x = 0.7
+        y = 0.0
         # reset car with chosen pose
         observation, _, _, _ = self.env.reset(np.array([[x, y, t]]))
         return self.normalise_observations(observation['scans'][0])
