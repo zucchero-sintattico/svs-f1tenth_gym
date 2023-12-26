@@ -15,6 +15,9 @@ from stable_baselines3.common.env_checker import check_env
 
 timestep = 0.01
 tensorboard_path = 'runs'
+total_timesteps = 1_000_000
+
+PATH = 'ppo'
 with open('src/map/example_map/config_example_map.yaml') as file:
     conf_dict = yaml.load(file, Loader=yaml.FullLoader)
     conf = Namespace(**conf_dict)
@@ -34,27 +37,28 @@ eval_env.seed(np.random.randint(pow(2, 31) - 1))
 model = PPO("MlpPolicy",
                     eval_env,
                     verbose=1,
-                    tensorboard_log=tensorboard_path)
+                    tensorboard_log=tensorboard_path, device='mps')
 
-model.learn(total_timesteps=25000)
-model.save("ppo_cartpole")
+try:
+    model = PPO.load(PATH, eval_env,  device='mps')
+except:
+    pass
+
+model.learn(total_timesteps=total_timesteps)
+model.save(PATH)
 
 del model # remove to demonstrate saving and loading
 
-model = PPO.load("ppo_cartpole")
+model = PPO.load(PATH)
 
 episode = 0
-while episode < 1000000:
-    model.save("ppo_f1tenth")
-    try:
-        episode += 1
-        obs = eval_env.reset()
-        done = False
-        while not done:
-            action, _ = model.predict(obs)
-            obs, reward, done, _ = eval_env.step(action)
-            if done:
-                print("Lap done", episode)
-            eval_env.render(mode='human_fast')
-    except KeyboardInterrupt:
-        pass
+while episode < 1000:
+    episode += 1
+    obs = eval_env.reset(random=False)
+    done = False
+    while not done:
+        action, _ = model.predict(obs)
+        obs, reward, done, _ = eval_env.step(action)
+        if done:
+            print("Lap done", episode)
+        eval_env.render(mode='human')

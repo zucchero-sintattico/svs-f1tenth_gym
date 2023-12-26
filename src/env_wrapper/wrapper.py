@@ -3,6 +3,22 @@ import numpy as np
 
 from gym import spaces
 from pathlib import Path
+import yaml
+from argparse import Namespace
+
+with open('src/map/example_map/config_example_map.yaml') as file:
+    conf_dict = yaml.load(file, Loader=yaml.FullLoader)
+    conf = Namespace(**conf_dict)
+    waypoints = np.loadtxt(conf.wpt_path, delimiter=conf.wpt_delim, skiprows=conf.wpt_rowskip)
+
+#get two array of x and y
+wx = waypoints[:, 1]
+wy = waypoints[:, 2]
+
+
+def get_distance_from_closest_point(x, y):
+    distances = np.sqrt(np.power(wx - x, 2) + np.power(wy - y, 2))
+    return np.min(distances)
 
 
 def convert_range(value, input_range, output_range):
@@ -60,11 +76,35 @@ class F110_Wrapped(gym.Wrapper):
 
         self.step_count += 1
 
-        reward = 1
+
+        if action_convert[1] >= 0:
+            reward = 1 + action_convert[1] / 200
+        else:
+            reward = 1 - action_convert[1] / 400
+
+
+        if min(observation['scans'][0]) < 1:
+            reward = 1 - ( 1 - min(observation['scans'][0]))
+            
+
+
+        X, Y = observation['poses_x'][0], observation['poses_y'][0]
+
+
+    
+        if get_distance_from_closest_point(X, Y) < 0.3:
+            reward = reward + 0.2
+
+
+
 
         if observation['collisions'][0]:
             self.count = 0
             reward = -1
+
+        #print("r",reward)
+
+        #print("r",reward)
 
         # end episode if car is spinning
         if abs(observation['poses_theta'][0]) > self.max_theta:
@@ -73,7 +113,21 @@ class F110_Wrapped(gym.Wrapper):
 
         return self.normalise_observations(observation['scans'][0]), reward, bool(done), info
 
-    def reset(self, start_xy=None, direction=None):
+    def reset(self, start_xy=None, direction=None, random = False):
+        rand_offset = np.random.uniform(-1, 1)
+
+        if random:
+            point = points[np.random.randint(0, len(points))]
+            x = point[0]
+            y = point[1]
+            direction = np.random.uniform(0, 2 * np.pi)
+            t = -np.random.uniform(max(-rand_offset * np.pi / 2, 0) - np.pi / 2,
+                                   min(-rand_offset * np.pi / 2, 0) + np.pi / 2) + direction
+        else:
+            x = conf.sx
+            y = conf.sy
+            t = conf.stheta
+
         # if start_xy is None:
         #     start_xy = np.zeros(2)
         # # start in random direction if no direction input
@@ -92,9 +146,6 @@ class F110_Wrapped(gym.Wrapper):
         # point car in random forward direction, not aiming at walls
         # t = -np.random.uniform(max(-rand_offset * np.pi / 2, 0) - np.pi / 2,
         #                        min(-rand_offset * np.pi / 2, 0) + np.pi / 2) + direction
-        t = 1.55
-        x = 0.7
-        y = 0.0
         # reset car with chosen pose
         observation, _, _, _ = self.env.reset(np.array([[x, y, t]]))
         return self.normalise_observations(observation['scans'][0])
