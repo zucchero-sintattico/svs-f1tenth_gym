@@ -10,12 +10,33 @@ from stable_baselines3.common.vec_env import SubprocVecEnv
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.env_checker import check_env
+from typing import Callable
+from stable_baselines3.common.callbacks import EvalCallback
+#adaptive learning rate
+def linear_schedule(initial_value: float) -> Callable[[float], float]:
+    """
+    Linear learning rate schedule.
+
+    :param initial_value: Initial learning rate.
+    :return: schedule that computes
+      current learning rate depending on remaining progress
+    """
+
+    def func(progress_remaining: float) -> float:
+        """
+        Progress will decrease from 1 (beginning) to 0.
+        :param progress_remaining:
+        :return: current learning rate
+        """
+        return progress_remaining * initial_value
+
+    return func
 
 
 
 timestep = 0.01
 tensorboard_path = 'runs'
-total_timesteps = 1_000_000
+total_timesteps = 1_000_00
 
 PATH = 'ppo'
 with open('src/map/example_map/config_example_map.yaml') as file:
@@ -33,28 +54,28 @@ eval_env = F110_Wrapped(eval_env)
 #eval_env = RandomF1TenthMap(eval_env, 1)
 eval_env.seed(np.random.randint(pow(2, 31) - 1))
 
-
-model = PPO("MlpPolicy",
-                    eval_env,
-                    verbose=1,
-                    tensorboard_log=tensorboard_path, device='mps')
-
 try:
-    model = PPO.load(PATH, eval_env,  device='mps')
+    model = PPO.load("./train_test/best_model", eval_env,  device='cpu')
 except:
-    pass
+    model = PPO("MlpPolicy", eval_env,  learning_rate=linear_schedule(0.0003), gamma=0.99, gae_lambda=0.95, verbose=1, device='cpu')
 
-model.learn(total_timesteps=total_timesteps)
-model.save(PATH)
+
+eval_callback = EvalCallback(eval_env, best_model_save_path='./train_test/',
+                             log_path='./train_test/', eval_freq=1000,
+                             deterministic=True, render=False)
+
+
+model.learn(total_timesteps=total_timesteps, callback=eval_callback)
+
 
 del model # remove to demonstrate saving and loading
 
-model = PPO.load(PATH)
+model = PPO.load("./train_test/best_model", eval_env,  device='cpu')
 
 episode = 0
 while episode < 1000:
     episode += 1
-    obs = eval_env.reset(random=False)
+    obs = eval_env.reset()
     done = False
     while not done:
         action, _ = model.predict(obs)

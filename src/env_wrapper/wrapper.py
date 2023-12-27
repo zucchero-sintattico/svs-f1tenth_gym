@@ -6,6 +6,8 @@ from pathlib import Path
 import yaml
 from argparse import Namespace
 
+from pyglet.gl import GL_POINTS
+
 with open('src/map/example_map/config_example_map.yaml') as file:
     conf_dict = yaml.load(file, Loader=yaml.FullLoader)
     conf = Namespace(**conf_dict)
@@ -15,10 +17,14 @@ with open('src/map/example_map/config_example_map.yaml') as file:
 wx = waypoints[:, 1]
 wy = waypoints[:, 2]
 
+color = [255, 0, 0]
 
-def get_distance_from_closest_point(x, y):
-    distances = np.sqrt(np.power(wx - x, 2) + np.power(wy - y, 2))
-    return np.min(distances)
+
+def get_distance_from_closest_point(x, y, index):
+    closest_x = wx[index]
+    closest_y = wy[index]
+    distance = np.sqrt(np.power(x - closest_x, 2) + np.power(y - closest_y, 2))
+    return distance
 
 
 def convert_range(value, input_range, output_range):
@@ -70,83 +76,64 @@ class F110_Wrapped(gym.Wrapper):
         self.count = 0
 
     def step(self, action):
+        global color
         # convert normalised actions (from RL algorithms) back to actual actions for simulator
         action_convert = self.un_normalise_actions(action)
         observation, _, done, info = self.env.step(np.array([action_convert]))
 
         self.step_count += 1
+        
+        next_x = wx[self.count]
+        next_y = wy[self.count]
 
+        
+        if self.env.renderer:
+            if done:
+                color = [np.random.randint(0, 255), np.random.randint(0, 255), np.random.randint(0, 255)]
+            self.env.renderer.batch.add(1, GL_POINTS, None, ('v3f/stream', [next_x*50, next_y*50, 0.]),
+                                ('c3B/stream', color))
+        reward = 0
+        reward = reward + 0.9
+        
+        if self.count < len(wx) - 1:
+            X, Y = observation['poses_x'][0], observation['poses_y'][0]
+        
+            dist = np.sqrt(np.power((X - next_x), 2) + np.power((Y - next_y), 2))
+            if dist < 2:
+                self.count += 1
 
-        if action_convert[1] >= 0:
-            reward = 1 + action_convert[1] / 200
+            if dist < 2.5:
+                complete = (self.count/len(wx)) * 0.5
+                reward += complete
+
         else:
-            reward = 1 - action_convert[1] / 400
-
-
-        if min(observation['scans'][0]) < 1:
-            reward = 1 - ( 1 - min(observation['scans'][0]))
-            
-
-
-        X, Y = observation['poses_x'][0], observation['poses_y'][0]
-
-
-    
-        if get_distance_from_closest_point(X, Y) < 0.3:
-            reward = reward + 0.2
-
-
-
+            self.count = 0
+            reward += 10
 
         if observation['collisions'][0]:
             self.count = 0
-            reward = -1
+            reward = -2
 
-        #print("r",reward)
-
-        #print("r",reward)
-
-        # end episode if car is spinning
         if abs(observation['poses_theta'][0]) > self.max_theta:
             done = True
+
+        if self.env.lap_counts[0] > 0:
+                    self.count = 0
+                    reward += 1
+                    if self.env.lap_counts[0] > 1:
+                        reward += 1
+                        self.env.lap_counts[0] = 0
 
 
         return self.normalise_observations(observation['scans'][0]), reward, bool(done), info
 
-    def reset(self, start_xy=None, direction=None, random = False):
-        rand_offset = np.random.uniform(-1, 1)
+    def reset(self, start_xy=None, direction=None):
+  
+    
+        x = wx[0]
+        y = wy[0]
+        t = conf.stheta
 
-        if random:
-            point = points[np.random.randint(0, len(points))]
-            x = point[0]
-            y = point[1]
-            direction = np.random.uniform(0, 2 * np.pi)
-            t = -np.random.uniform(max(-rand_offset * np.pi / 2, 0) - np.pi / 2,
-                                   min(-rand_offset * np.pi / 2, 0) + np.pi / 2) + direction
-        else:
-            x = conf.sx
-            y = conf.sy
-            t = conf.stheta
-
-        # if start_xy is None:
-        #     start_xy = np.zeros(2)
-        # # start in random direction if no direction input
-        # if direction is None:
-        #     direction = np.random.uniform(0, 2 * np.pi)
-        # # get slope perpendicular to track direction
-        # slope = np.tan(direction + np.pi / 2)
-        # # get magintude of slope to normalise parametric line
-        # magnitude = np.sqrt(1 + np.power(slope, 2))
-        # # get random point along line of width track
-        # rand_offset = np.random.uniform(-1, 1)
-        # rand_offset_scaled = rand_offset * self.start_radius
-
-        # convert position along line to position between walls at current point
-
-        # point car in random forward direction, not aiming at walls
-        # t = -np.random.uniform(max(-rand_offset * np.pi / 2, 0) - np.pi / 2,
-        #                        min(-rand_offset * np.pi / 2, 0) + np.pi / 2) + direction
-        # reset car with chosen pose
         observation, _, _, _ = self.env.reset(np.array([[x, y, t]]))
         return self.normalise_observations(observation['scans'][0])
 
