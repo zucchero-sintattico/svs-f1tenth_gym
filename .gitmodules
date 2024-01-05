@@ -1,3 +1,3 @@
-[submodule "F1Tenth-RL"]
-	path = F1Tenth-RL
-	url = https://github.com/FT-Autonomous/F1Tenth-RL.git
+[submodule "f1tenth_racetracks"]
+	path = map/f1tenth_racetracks
+	url = https://github.com/f1tenth/f1tenth_racetracks.git
