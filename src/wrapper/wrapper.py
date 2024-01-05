@@ -8,10 +8,6 @@ from pyglet.gl import GL_POINTS
 import utility.map_utility as map_utility
 
 
-color = [255, 0, 0]
-wx = []
-wy = []
-
 
 def get_distance_from_closest_point(x_list, w_list, x, y, index):
     closest_x = x_list[index]
@@ -28,22 +24,21 @@ def convert_range(value, input_range, output_range):
     out_range = out_max - out_min
     return (((value - in_min) * out_range) / in_range) + out_min
 
+
 class F110_Wrapped(gym.Wrapper):
     """
     This is a wrapper for the F1Tenth Gym environment intended
     for only one car, but should be expanded to handle multi-agent scenarios
     """
 
-    def __init__(self, env, random_map = False):
+    def __init__(self, env, random_map=False):
         super().__init__(env)
 
         # normalised action space, steer and speed
-        self.action_space = spaces.Box(low=np.array(
-            [-1.0, -1.0]), high=np.array([1.0, 1.0]), dtype=np.float)
+        self.action_space = spaces.Box(low=np.array([-1.0, -1.0]), high=np.array([1.0, 1.0]), dtype=np.float)
 
         # normalised observations, just take the lidar scans
-        self.observation_space = spaces.Box(
-            low=-1.0, high=1.0, shape=(1080,), dtype=np.float)
+        self.observation_space = spaces.Box(low=-1.0, high=1.0, shape=(1080,), dtype=np.float)
 
         # store allowed steering/speed/lidar ranges for normalisation
         self.s_min = self.env.params['s_min']
@@ -59,8 +54,7 @@ class F110_Wrapped(gym.Wrapper):
         self.track_width = 3.2  # ~= track width, see random_trackgen.py
 
         # radius of circle where car can start on track, relative to a centerpoint
-        self.start_radius = (self.track_width / 2) - \
-            ((self.car_length + self.car_width) / 2)  # just extra wiggle room
+        self.start_radius = (self.track_width / 2) - ((self.car_length + self.car_width) / 2)  # just extra wiggle room
 
         self.step_count = 0
 
@@ -71,59 +65,58 @@ class F110_Wrapped(gym.Wrapper):
         self.map_path = None
         self.random_map = random_map
 
+        self.race_line_color = [255, 0, 0]
+        self.race_line_x = []
+        self.race_line_y = []
 
-    
-    def set_map_path(self, map_path): 
+    def set_raceliens(self):
+        if self.map_path is not None:
+            raceline = map_utility.get_raceline(self.map_path)
+            self.race_line_x, self.race_line_y, _ = map_utility.get_x_y_theta_from_raceline(raceline)
+            self.race_line_x = self.race_line_x.tolist()
+            self.race_line_y = self.race_line_y.tolist()
+
+    def set_map_path(self, map_path):
         self.map_path = map_path
+        self.set_raceliens()
+
 
     def start_position(self):
         if self.map_path is not None:
-            x, y ,t = map_utility.get_start_position(self.map_path)
+            x, y, t = map_utility.get_start_position(self.map_path)
             self.set_raceliens()
             return x, y, t
         else:
             raise Exception("Map path not set")
 
-    def set_raceliens(self):
-        global wx, wy
-        if self.map_path is not None:
-            raceline = map_utility.get_raceline(self.map_path)
-            wx, wy, _ = map_utility.get_x_y_theta_from_raceline(raceline)
-            wx = wx.tolist()
-            wy = wy.tolist()
-        return wx, wy
-
 
 
     def step(self, action):
-        global color
-        # convert normalised actions (from RL algorithms) back to actual actions for simulator
         action_convert = self.un_normalise_actions(action)
         observation, _, done, info = self.env.step(np.array([action_convert]))
 
         self.step_count += 1
-        
-        next_x = wx[self.count]
-        next_y = wy[self.count]
 
-        
+        next_x = self.race_line_x[self.count]
+        next_y = self.race_line_y[self.count]
+
         if self.env.renderer:
             if done:
-                color = [np.random.randint(0, 255), np.random.randint(0, 255), np.random.randint(0, 255)]
-            self.env.renderer.batch.add(1, GL_POINTS, None, ('v3f/stream', [next_x*50, next_y*50, 0.]),
-                                ('c3B/stream', color))
+                self.race_line_color = [np.random.randint(0, 255), np.random.randint(0, 255), np.random.randint(0, 255)]
+            self.env.renderer.batch.add(1, GL_POINTS, None, ('v3f/stream', [next_x * 50, next_y * 50, 0.]),
+                                        ('c3B/stream', self.race_line_color))
         reward = 0
         reward = reward + 0.9
-        
-        if self.count < len(wx) - 1:
+
+        if self.count < len(self.race_line_x) - 1:
             X, Y = observation['poses_x'][0], observation['poses_y'][0]
-        
+
             dist = np.sqrt(np.power((X - next_x), 2) + np.power((Y - next_y), 2))
             if dist < 2:
                 self.count += 1
 
             if dist < 2.5:
-                complete = (self.count/len(wx)) * 0.5
+                complete = (self.count / len(self.race_line_x)) * 0.5
                 reward += complete
 
         else:
@@ -139,12 +132,11 @@ class F110_Wrapped(gym.Wrapper):
             done = True
 
         if self.env.lap_counts[0] > 0:
-                    self.count = 0
-                    reward += 1
-                    if self.env.lap_counts[0] > 1:
-                        reward += 1
-                        self.env.lap_counts[0] = 0
-
+            self.count = 0
+            reward += 1
+            if self.env.lap_counts[0] > 1:
+                reward += 1
+                self.env.lap_counts[0] = 0
 
         return self.normalise_observations(observation['scans'][0]), reward, bool(done), info
 
@@ -173,8 +165,7 @@ class F110_Wrapped(gym.Wrapper):
         self.current_seed = seed
         np.random.seed(self.current_seed)
         print(f"Seed -> {self.current_seed}")
-        
-        
+
     def un_normalise_actions(self, actions):
         # convert actions from range [-1, 1] to normal steering/speed range
         steer = convert_range(actions[0], [-1, 1], [self.s_min, self.s_max])
@@ -184,10 +175,3 @@ class F110_Wrapped(gym.Wrapper):
     def normalise_observations(self, observations):
         # convert observations from normal lidar distances range to range [-1, 1]
         return convert_range(observations, [self.lidar_min, self.lidar_max], [-1, 1])
-    
-
-
-
-
-
-

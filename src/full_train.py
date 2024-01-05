@@ -7,7 +7,7 @@ import utility.map_utility as map_utility
 from random_train import RandomTrain
 from train_on_one_map import TrainOnOneMap
 
-#RandomTrain().run()
+RandomTrain().run()
 
 TrainOnOneMap("YasMarina").run()
 
