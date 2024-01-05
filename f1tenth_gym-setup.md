@@ -11,6 +11,12 @@ pip install -e .
 pip install -r requirements.txt
 ```
 
+If there are any error during installation([source](https://github.com/freqtrade/freqtrade/issues/8376#issuecomment-1519257211)):
+
+```bash
+pip install wheel==0.38.4
+```
+
 ### Test the installation
 
 ```bash
