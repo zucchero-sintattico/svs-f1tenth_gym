@@ -34,7 +34,7 @@ class F110_Wrapped(gym.Wrapper):
     for only one car, but should be expanded to handle multi-agent scenarios
     """
 
-    def __init__(self, env):
+    def __init__(self, env, random_map = False):
         super().__init__(env)
 
         # normalised action space, steer and speed
@@ -69,6 +69,7 @@ class F110_Wrapped(gym.Wrapper):
         self.count = 0
 
         self.map_path = None
+        self.random_map = random_map
 
 
     
@@ -148,6 +149,14 @@ class F110_Wrapped(gym.Wrapper):
         return self.normalise_observations(observation['scans'][0]), reward, bool(done), info
 
     def reset(self):
+        if self.random_map:
+            path = map_utility.get_one_random_map()
+            map_path = map_utility.get_formatted_map(path)
+            print("Rand Map :", map_path)
+            map_ext = map_utility.map_ext
+            self.update_map(map_path, map_ext, update_render=True)
+            self.set_map_path(path)
+
         x, y, t = self.start_position()
         observation, _, _, _ = self.env.reset(np.array([[x, y, t]]))
         return self.normalise_observations(observation['scans'][0])
@@ -175,6 +184,10 @@ class F110_Wrapped(gym.Wrapper):
     def normalise_observations(self, observations):
         # convert observations from normal lidar distances range to range [-1, 1]
         return convert_range(observations, [self.lidar_min, self.lidar_max], [-1, 1])
+    
+
+
+
 
 
 
