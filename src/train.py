@@ -12,6 +12,8 @@ from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.env_checker import check_env
 from typing import Callable
 from stable_baselines3.common.callbacks import EvalCallback
+import utility.map_utility as map_utility
+
 #adaptive learning rate
 def linear_schedule(initial_value: float) -> Callable[[float], float]:
     """
@@ -36,20 +38,24 @@ def linear_schedule(initial_value: float) -> Callable[[float], float]:
 
 timestep = 0.01
 tensorboard_path = 'runs'
-total_timesteps = 1_000_00
+total_timesteps = 1_000
 
-PATH = 'ppo'
-with open('src/map/example_map/config_example_map.yaml') as file:
-    conf_dict = yaml.load(file, Loader=yaml.FullLoader)
-    conf = Namespace(**conf_dict)
+#load random map using utility_map
 
-print(conf.sx, conf.sy,conf.stheta)
+path = map_utility.get_one_random_map()
+map_path = map_utility.get_formatted_map(path)
+print("map path =", map_path)
+map_ext = map_utility.map_ext
 
-eval_env  = gym.make('f110_gym:f110-v0', map=conf.map_path, map_ext=conf.map_ext, num_agents=1, timestep=timestep, integrator=Integrator.RK4)
+print(map_path)
+
+
+eval_env  = gym.make('f110_gym:f110-v0', map=map_path, map_ext=map_ext, num_agents=1, timestep=timestep, integrator=Integrator.RK4)
         # wrap basic gym with RL functions
 
 # wrap evaluation environment
 eval_env = F110_Wrapped(eval_env)
+eval_env.set_map_path(path)
 #eval_env = ThrottleMaxSpeedReward(eval_env,0,1,2.5,2.5)
 #eval_env = RandomF1TenthMap(eval_env, 1)
 eval_env.seed(np.random.randint(pow(2, 31) - 1))

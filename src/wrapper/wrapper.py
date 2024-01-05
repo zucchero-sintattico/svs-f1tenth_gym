@@ -1,28 +1,21 @@
 import gym
 import numpy as np
-
 from gym import spaces
 from pathlib import Path
 import yaml
 from argparse import Namespace
-
 from pyglet.gl import GL_POINTS
+import utility.map_utility as map_utility
 
-with open('src/map/example_map/config_example_map.yaml') as file:
-    conf_dict = yaml.load(file, Loader=yaml.FullLoader)
-    conf = Namespace(**conf_dict)
-    waypoints = np.loadtxt(conf.wpt_path, delimiter=conf.wpt_delim, skiprows=conf.wpt_rowskip)
-
-#get two array of x and y
-wx = waypoints[:, 1]
-wy = waypoints[:, 2]
 
 color = [255, 0, 0]
+wx = []
+wy = []
 
 
-def get_distance_from_closest_point(x, y, index):
-    closest_x = wx[index]
-    closest_y = wy[index]
+def get_distance_from_closest_point(x_list, w_list, x, y, index):
+    closest_x = x_list[index]
+    closest_y = w_list[index]
     distance = np.sqrt(np.power(x - closest_x, 2) + np.power(y - closest_y, 2))
     return distance
 
@@ -74,6 +67,32 @@ class F110_Wrapped(gym.Wrapper):
         # set threshold for maximum angle of car, to prevent spinning
         self.max_theta = 100
         self.count = 0
+
+        self.map_path = None
+
+
+    
+    def set_map_path(self, map_path): 
+        self.map_path = map_path
+
+    def start_position(self):
+        if self.map_path is not None:
+            x, y ,t = map_utility.get_start_position(self.map_path)
+            self.set_raceliens()
+            return x, y, t
+        else:
+            raise Exception("Map path not set")
+
+    def set_raceliens(self):
+        global wx, wy
+        if self.map_path is not None:
+            raceline = map_utility.get_raceline(self.map_path)
+            wx, wy, _ = map_utility.get_x_y_theta_from_raceline(raceline)
+            wx = wx.tolist()
+            wy = wy.tolist()
+        return wx, wy
+
+
 
     def step(self, action):
         global color
@@ -128,13 +147,8 @@ class F110_Wrapped(gym.Wrapper):
 
         return self.normalise_observations(observation['scans'][0]), reward, bool(done), info
 
-    def reset(self, start_xy=None, direction=None):
-  
-    
-        x = wx[0]
-        y = wy[0]
-        t = conf.stheta
-
+    def reset(self):
+        x, y, t = self.start_position()
         observation, _, _, _ = self.env.reset(np.array([[x, y, t]]))
         return self.normalise_observations(observation['scans'][0])
 

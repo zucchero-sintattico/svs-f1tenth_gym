@@ -10,6 +10,7 @@ wpt_xind= 1
 wpt_yind= 2
 wpt_thind= 3
 wpt_vind= 5
+map_ext= '.png'
 
 def get_map_path():
     path = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
@@ -32,6 +33,10 @@ def get_map_list():
 def get_map(map_name):
     map_path = get_map_path()
     map_file = map_path + "/" + map_name
+    return map_file
+
+def get_formatted_map(map_name):
+    map_file =  map_name + "/" + get_map_name(map_name) + "_map"
     return map_file
 
 def get_map_name(map_file):
@@ -87,15 +92,10 @@ def get_x_y_theta_from_raceline(raceline):
     theta = raceline[:, wpt_thind]
     return x, y, theta
 
-def get_start_pose(map_folder):
+def get_start_position(map_folder):
     raceline = get_raceline(map_folder)
     x, y, theta = get_x_y_theta_from_raceline(raceline)
     start_pose = [x[0], y[0], theta[0]]
     return start_pose
 
 
-
-
-if __name__ == "__main__":
-    print(get_one_random_map())
-    print(get_start_pose(get_one_random_map()))
