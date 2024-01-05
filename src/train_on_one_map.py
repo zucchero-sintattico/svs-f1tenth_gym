@@ -10,7 +10,6 @@ from utility.linear_schedule import linear_schedule
 class TrainOnOneMap:
     def __init__(self, map_name="Monza"):
         self.timestep = 0.01
-        self.tensorboard_path = 'runs'
         self.total_timesteps = 1_000_00
         self.learning_rate = linear_schedule(0.0003)
         self.gamma = 0.99

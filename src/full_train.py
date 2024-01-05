@@ -1,28 +1,20 @@
 import gym
-from stable_baselines3 import PPO, A2C
+from stable_baselines3 import PPO
 from wrapper.wrapper import F110_Wrapped
-import yaml
 from argparse import Namespace
 from f110_gym.envs.base_classes import Integrator
-import numpy as np
-from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3.common.vec_env import SubprocVecEnv
-from stable_baselines3.common.callbacks import BaseCallback
-from stable_baselines3.common.evaluation import evaluate_policy
-from stable_baselines3.common.env_checker import check_env
-from typing import Callable
-from stable_baselines3.common.callbacks import EvalCallback
 import utility.map_utility as map_utility
 from random_train import RandomTrain
 from train_on_one_map import TrainOnOneMap
 
-RandomTrain().run()
-TrainOnOneMap("Monza").run()
+#RandomTrain().run()
+
+TrainOnOneMap("YasMarina").run()
 
 
 timestep = 0.01
 
-path = map_utility.get_map("Monza")
+path = map_utility.get_map("YasMarina")
 map_path = map_utility.get_formatted_map(path)
 map_ext = map_utility.map_ext
 
