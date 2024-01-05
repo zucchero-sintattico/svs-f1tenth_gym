@@ -108,7 +108,8 @@ class F110_Wrapped(gym.Wrapper):
 
         else:
             self.count = 0
-            reward += 10
+            reward += 100
+            print("Lap Done")
 
         if observation['collisions'][0]:
             self.count = 0
