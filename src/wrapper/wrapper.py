@@ -1,20 +1,13 @@
 import gym
 import numpy as np
+#from gym import spaces
 from gym import spaces
 from pathlib import Path
 import yaml
 from argparse import Namespace
 from pyglet.gl import GL_POINTS
 import utility.map_utility as map_utility
-
-
-
-def get_distance_from_closest_point(x_list, w_list, x, y, index):
-    closest_x = x_list[index]
-    closest_y = w_list[index]
-    distance = np.sqrt(np.power(x - closest_x, 2) + np.power(y - closest_y, 2))
-    return distance
-
+from typing import Any, Dict, List, Optional, SupportsFloat, Tuple, Union
 
 def convert_range(value, input_range, output_range):
     # converts value(s) from range to another range
@@ -68,13 +61,33 @@ class F110_Wrapped(gym.Wrapper):
         self.race_line_color = [255, 0, 0]
         self.race_line_x = []
         self.race_line_y = []
+        self.race_line_theta = []
+
+        self.episode_returns = []
+
+
+    def get_total_steps(self) -> int:
+        return self.step_count
+    
+    def get_episode_rewards(self) -> List[float]:
+        """
+        Returns the rewards of all the episodes
+
+        :return:
+        """
+        return self.episode_returns
+
+
+  
+
 
     def set_raceliens(self):
         if self.map_path is not None:
             raceline = map_utility.get_raceline(self.map_path)
-            self.race_line_x, self.race_line_y, _ = map_utility.get_x_y_theta_from_raceline(raceline)
+            self.race_line_x, self.race_line_y, self.race_line_theta = map_utility.get_x_y_theta_from_raceline(raceline)
             self.race_line_x = self.race_line_x.tolist()
             self.race_line_y = self.race_line_y.tolist()
+            self.race_line_theta = self.race_line_theta.tolist()
 
     def set_map_path(self, map_path):
         self.map_path = map_path
@@ -92,10 +105,16 @@ class F110_Wrapped(gym.Wrapper):
 
 
     def step(self, action):
+
+        #add noise to action
+        #action = action + np.random.normal(0, 0.1, 2)
+
         action_convert = self.un_normalise_actions(action)
         observation, _, done, info = self.env.step(np.array([action_convert]))
 
         self.step_count += 1
+
+
 
         next_x = self.race_line_x[self.count]
         next_y = self.race_line_y[self.count]
@@ -105,40 +124,51 @@ class F110_Wrapped(gym.Wrapper):
                 self.race_line_color = [np.random.randint(0, 255), np.random.randint(0, 255), np.random.randint(0, 255)]
             self.env.renderer.batch.add(1, GL_POINTS, None, ('v3f/stream', [next_x * 50, next_y * 50, 0.]),
                                         ('c3B/stream', self.race_line_color))
-        reward = 0
-        reward = reward + 0.9
 
+
+
+        reward = 0.9
+
+        
         if self.count < len(self.race_line_x) - 1:
             X, Y = observation['poses_x'][0], observation['poses_y'][0]
-
+        
             dist = np.sqrt(np.power((X - next_x), 2) + np.power((Y - next_y), 2))
             if dist < 2:
-                self.count += 1
+                self.count = self.count + 1
+                reward += 0.01
+                pass
 
             if dist < 2.5:
-                complete = (self.count / len(self.race_line_x)) * 0.5
+                complete = 1#(self.count/len(self.race_line_x)) * 0.5
                 reward += complete
-
         else:
+            print("-------------Lap Done--------")
             self.count = 0
-            reward += 100
-            print("Lap Done")
+            reward += 10
 
         if observation['collisions'][0]:
+            done = True
             self.count = 0
-            reward = -2
+            reward = 0
 
         if abs(observation['poses_theta'][0]) > self.max_theta:
             done = True
 
-        if self.env.lap_counts[0] > 0:
-            self.count = 0
-            reward += 1
-            if self.env.lap_counts[0] > 1:
-                reward += 1
-                self.env.lap_counts[0] = 0
+
+
+
+
+        #print("Reward :", reward, self.count, self.step_count)
+
+
+        self.episode_returns.append(reward)
+
+        #self.render("human_fast")
+
 
         return self.normalise_observations(observation['scans'][0]), reward, bool(done), info
+
 
     def reset(self):
         if self.random_map:
@@ -149,11 +179,33 @@ class F110_Wrapped(gym.Wrapper):
             self.update_map(map_path, map_ext, update_render=True)
             self.set_map_path(path)
 
-        x, y, t = self.start_position()
+        # Select a random point from the race line
+        race_line_x = self.race_line_x
+        race_line_y = self.race_line_y
+        race_line_theta = self.race_line_theta
+        random_index = np.random.randint(len(race_line_x))
+        x = race_line_x[random_index]
+        y = race_line_y[random_index]
+        t = race_line_theta[random_index]
+
+
+        # Update the race line to start from the selected point
+        race_line_x = race_line_x[random_index:] + race_line_x[:random_index]
+        race_line_y = race_line_y[random_index:] + race_line_y[:random_index]
+        race_line_theta = race_line_theta[random_index:] + race_line_theta[:random_index]
+        
+
+        self.race_line_x = race_line_x
+        self.race_line_y = race_line_y
+        self.race_line_theta = race_line_theta
+
+        # else:
+        #     x, y, t = self.start_position()
+
         observation, _, _, _ = self.env.reset(np.array([[x, y, t]]))
         return self.normalise_observations(observation['scans'][0])
 
-    def update_map(self, map_name, map_extension, update_render=True):
+    def update_map(self, map_name, map_extension, update_render=False):
         self.env.map_name = map_name
         self.env.map_ext = map_extension
         self.env.update_map(f"{map_name}.yaml", map_extension)
@@ -175,3 +227,4 @@ class F110_Wrapped(gym.Wrapper):
     def normalise_observations(self, observations):
         # convert observations from normal lidar distances range to range [-1, 1]
         return convert_range(observations, [self.lidar_min, self.lidar_max], [-1, 1])
+    

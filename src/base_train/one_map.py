@@ -7,17 +7,18 @@ from stable_baselines3.common.callbacks import EvalCallback
 import utility.map_utility as map_utility
 from utility.linear_schedule import linear_schedule
 
-class TrainOnOneMap:
-    def __init__(self, map_name="Monza"):
+class BaseOneMap:
+    def __init__(self, map_name, load_model=False, total_timesteps = 50_000):
         self.timestep = 0.01
-        self.total_timesteps = 1_000
+        self.total_timesteps = total_timesteps
         self.learning_rate = linear_schedule(0.0003)
         self.gamma = 0.99
         self.gae_lambda = 0.95
         self.verbose = 1
         self.device = 'cpu'
         self.eval_env = None
-        
+        self.tensorboard_path = "./train_test/"
+        self.load_model = load_model
         path = map_utility.get_map(map_name)
         map_path = map_utility.get_formatted_map(path)
         map_ext = map_utility.map_ext
@@ -28,19 +29,24 @@ class TrainOnOneMap:
         self.eval_env.set_map_path(path)
         self.eval_env.seed(np.random.randint(pow(2, 31) - 1))
 
-        
 
     def run(self):
 
-        try:
-            model = PPO.load("./train_test/best_model", self.eval_env, device='cpu')
-        except:
-            model = PPO("MlpPolicy", self.eval_env, learning_rate=self.learning_rate, gamma=self.gamma, gae_lambda=self.gae_lambda, verbose=self.verbose, device=self.device)
+        model = PPO("MlpPolicy", self.eval_env, 
+                     gae_lambda=self.gae_lambda, 
+                     verbose=self.verbose, 
+                     tensorboard_log=self.tensorboard_path)
+        
+        if self.load_model:
+            model = PPO.load(self.tensorboard_path + "best_model", env=self.eval_env)
 
-        eval_callback = EvalCallback(self.eval_env, best_model_save_path='./train_test/', log_path='./train_test/', eval_freq=1000, deterministic=True, render=False)
 
-        model.learn(total_timesteps=self.total_timesteps, callback=eval_callback)
+        model.learn(total_timesteps=self.total_timesteps)
+
+        model.save(self.tensorboard_path + "best_model")
 
 if __name__ == "__main__":
-    train_on_one_map = TrainOnOneMap()
+    train_on_one_map = BaseOneMap()
     train_on_one_map.run()
+
+
