@@ -45,24 +45,21 @@ eval_env = F110_Wrapped(eval_env, random_map=True)
 #eval_env = RandomF1TenthMap(eval_env, 1)
 eval_env.seed(np.random.randint(pow(2, 31) - 1))
 
-total_timesteps = 1_000_0
+total_timesteps = 50_000
 
-for i in range (0, 10):
+for timesteps in range (100_000, 10_000, -10_000):
     try:
-        model = PPO.load("./train_test/best_model", eval_env, learning_rate=0.0001)
+        model = PPO.load("./train_test/best_model", eval_env)
     except:
-        model = PPO("MlpPolicy", eval_env,  learning_rate=0.005, gamma=0.99, gae_lambda=0.95, verbose=2,  tensorboard_log=tensorboard_path)
+        model = PPO("MlpPolicy", eval_env, gamma=0.99, gae_lambda=0.95, verbose=1,  tensorboard_log=tensorboard_path)
 
 
     eval_callback = EvalCallback(eval_env, best_model_save_path='./train_test/',
                                 log_path='./train_test/', eval_freq=1000,
                                 deterministic=True, render=False)
 
-    #model.learn(total_timesteps=total_timesteps, progress_bar=True, callback=eval_callback)
-# model.save("./train_test/best_model")
-
-del model # remove to demonstrate saving and loading
-
+    model.learn(total_timesteps=timesteps, progress_bar=True, callback=eval_callback)
+    del model 
 
 
 eval_env  = gym.make('f110_gym:f110-v0', map=map_path, map_ext=map_ext, num_agents=1, timestep=timestep, integrator=Integrator.RK4)
@@ -78,7 +75,7 @@ model = PPO.load("./train_test/best_model", eval_env)
 
 #
 
-#model.learn(total_timesteps=1_000, progress_bar=True, callback=eval_callback, reset_num_timesteps=False)
+model.learn(total_timesteps=1_000, progress_bar=True, callback=eval_callback, reset_num_timesteps=False)
 
 mean_reward, std_reward = evaluate_policy(model, model.get_env(), n_eval_episodes=10)
 
