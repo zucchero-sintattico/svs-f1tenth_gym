@@ -148,6 +148,9 @@ class F110_Wrapped(gym.Wrapper):
             self.count = 0
             reward += 10
 
+
+            
+
         if observation['collisions'][0]:
             done = True
             self.count = 0
@@ -162,8 +165,8 @@ class F110_Wrapped(gym.Wrapper):
             self.done = True
             self.count = 0
             reward = 0
-            print("Episode Done - car out of track")
-            self.reset()
+            print("Episod Done - Too slow")
+
 
 
 

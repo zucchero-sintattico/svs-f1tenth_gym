@@ -30,6 +30,8 @@ eval_env = F110_Wrapped(eval_env, random_map=True)
 
 eval_env.seed(1773449316)
 
+skip_training = True
+
 max_timesteps = 200_000
 min_timesteps = 50_000
 
@@ -43,48 +45,52 @@ learning_rate_list = np.logspace(np.log10(max_learning_rate), np.log10(min_learn
 print("timestemp" , timesteps_list)
 print("leaning rate", learning_rate_list)
 
-for timesteps, learning_rate in zip(timesteps_list, learning_rate_list):
-        #if best_model exists, load it
-    # if os.path.exists("./train_test/best_model.zip"):
-    #     print("Loading Existing Model")
-    #     model = PPO.load("./train_test/best_model", eval_env, learning_rate=learning_rate)
-    if os.path.exists("./train_test/best_global_model.zip"):
-        print("Loading Existing Model")
-        model = PPO.load("./train_test/best_global_model", eval_env, learning_rate=learning_rate)
-    else:
-        model = PPO("MlpPolicy", eval_env, gamma=0.99, learning_rate=learning_rate, gae_lambda=0.95, verbose=0,  tensorboard_log=tensorboard_path)
+if not skip_training:
+
+    for timesteps, learning_rate in zip(timesteps_list, learning_rate_list):
+            #if best_model exists, load it
+        # if os.path.exists("./train_test/best_model.zip"):
+        #     print("Loading Existing Model")
+        #     model = PPO.load("./train_test/best_model", eval_env, learning_rate=learning_rate)
+        if os.path.exists("./train_test/best_global_model.zip"):
+            print("Loading Existing Model")
+            model = PPO.load("./train_test/best_global_model", eval_env, learning_rate=learning_rate)
+        else:
+            model = PPO("MlpPolicy", eval_env, gamma=0.99, learning_rate=learning_rate, gae_lambda=0.95, verbose=0,  tensorboard_log=tensorboard_path)
 
 
-    eval_callback = EvalCallback(eval_env, best_model_save_path='./train_test/',
-                                log_path='./train_test/', eval_freq= int(timesteps/20),
-                                deterministic=True, render=False)
-    
+        eval_callback = EvalCallback(eval_env, best_model_save_path='./train_test/',
+                                    log_path='./train_test/', eval_freq= int(timesteps/20),
+                                    deterministic=True, render=False)
+        
 
 
-    model.learn(total_timesteps=timesteps, progress_bar=True, callback=eval_callback)
+        model.learn(total_timesteps=timesteps, progress_bar=True, callback=eval_callback)
 
-    del model 
+        del model 
 
-    model = PPO.load("./train_test/best_model", eval_env)
+        model = PPO.load("./train_test/best_model", eval_env)
 
-    mean_reward, _ = evaluate_policy(model, model.get_env(), n_eval_episodes=20)
+        mean_reward, _ = evaluate_policy(model, model.get_env(), n_eval_episodes=20)
 
-    #save in file the mean reward, if the file does not exist, create it
-    if not os.path.exists("./train_test/mean_reward.txt"):
-        with open("./train_test/mean_reward.txt", "w") as f:
-            f.write(f"{mean_reward}")
-            model.save("./train_test/best_global_model")
-    else:
-        #overwrite the file with the new mean reward if it is better
-        with open("./train_test/mean_reward.txt", "r") as f:
-            best_mean_reward = float(f.read())
-        if mean_reward > best_mean_reward:
+
+        #save in file the mean reward, if the file does not exist, create it
+        if not os.path.exists("./train_test/mean_reward.txt"):
             with open("./train_test/mean_reward.txt", "w") as f:
                 f.write(f"{mean_reward}")
-            model.save("./train_test/best_global_model")
-            print("Saved Best Model")
+                model.save("./train_test/best_global_model")
+        else:
+            #overwrite the file with the new mean reward if it is better
+            with open("./train_test/mean_reward.txt", "r") as f:
+                best_mean_reward = float(f.read())
+            if mean_reward > best_mean_reward:
+                with open("./train_test/mean_reward.txt", "w") as f:
+                    f.write(f"{mean_reward}")
+                model.save("./train_test/best_global_model")
+                print("Saved Best Model")
 
-    del model 
+        del model 
+
 
 
     
@@ -96,14 +102,13 @@ eval_env.set_map_path(path)
 
 model = PPO.load("./train_test/best_global_model", eval_env)
 
-mean_reward, std_reward = evaluate_policy(model, model.get_env(), n_eval_episodes=10)
+mean_reward, std_reward = evaluate_policy(model, model.get_env(), n_eval_episodes=1)
 
 print(mean_reward)
 
 # Enjoy trained agent
 vec_env = model.get_env()
 obs = vec_env.reset()
-
 
 episode = 0
 while episode < 100:
@@ -116,4 +121,4 @@ while episode < 100:
         obs, rewards, dones, info = vec_env.step(action)
         if done:
             print("-->", episode)
-        eval_env.render(mode='human_fast')
+        eval_env.render(mode='human')
