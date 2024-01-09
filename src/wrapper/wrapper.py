@@ -149,7 +149,7 @@ class F110_Wrapped(gym.Wrapper):
             reward += 10
 
 
-            
+
 
         if observation['collisions'][0]:
             done = True
@@ -162,6 +162,7 @@ class F110_Wrapped(gym.Wrapper):
             reward = 0
                     #if the car go out of the track the episode is done
         if len(self.episode_returns) > 50_000:
+            self.episode_returns = []
             self.done = True
             self.count = 0
             reward = 0
