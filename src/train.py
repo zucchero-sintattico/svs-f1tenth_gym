@@ -39,6 +39,8 @@ max_learning_rate = 0.0001
 min_learning_rate = 0.00005
 num_of_steps = 4
 
+device = 'cpu'
+
 timesteps_list = np.logspace(np.log10(min_timesteps), np.log10(max_timesteps), num=num_of_steps, endpoint=True, base=10.0, dtype=int, axis=0)
 learning_rate_list = np.logspace(np.log10(max_learning_rate), np.log10(min_learning_rate), num=num_of_steps, endpoint=True, base=10.0, dtype=None, axis=0)
 
@@ -54,9 +56,9 @@ if not skip_training:
         #     model = PPO.load("./train_test/best_model", eval_env, learning_rate=learning_rate)
         if os.path.exists("./train_test/best_global_model.zip"):
             print("Loading Existing Model")
-            model = PPO.load("./train_test/best_global_model", eval_env, learning_rate=learning_rate)
+            model = PPO.load("./train_test/best_global_model", eval_env, learning_rate=learning_rate, device=device)
         else:
-            model = PPO("MlpPolicy", eval_env, gamma=0.99, learning_rate=learning_rate, gae_lambda=0.95, verbose=0,  tensorboard_log=tensorboard_path)
+            model = PPO("MlpPolicy", eval_env, gamma=0.99, learning_rate=learning_rate, gae_lambda=0.95, verbose=0,  tensorboard_log=tensorboard_path, device=device)
 
 
         eval_callback = EvalCallback(eval_env, best_model_save_path='./train_test/',
@@ -69,7 +71,7 @@ if not skip_training:
 
         del model 
 
-        model = PPO.load("./train_test/best_model", eval_env)
+        model = PPO.load("./train_test/best_model", eval_env, device=device)
 
         mean_reward, _ = evaluate_policy(model, model.get_env(), n_eval_episodes=20)
 
@@ -100,7 +102,7 @@ eval_env  = gym.make('f110_gym:f110-v0', map=map_path, map_ext=map_ext, num_agen
 eval_env = F110_Wrapped(eval_env, random_map=False)
 eval_env.set_map_path(path)
 
-model = PPO.load("./train_test/best_global_model", eval_env)
+model = PPO.load("./train_test/best_global_model", eval_env, device=device)
 
 mean_reward, std_reward = evaluate_policy(model, model.get_env(), n_eval_episodes=1)
 
