@@ -5,6 +5,7 @@ import yaml
 from argparse import Namespace
 from f110_gym.envs.base_classes import Integrator
 import numpy as np
+import os
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import SubprocVecEnv
 from stable_baselines3.common.callbacks import BaseCallback
@@ -25,59 +26,79 @@ map_path = get_formatted_map(path)
 
 eval_env  = gym.make('f110_gym:f110-v0', map=map_path, map_ext=map_ext, num_agents=1, timestep=timestep, integrator=Integrator.RK4)
 
-        # wrap basic gym with RL functions
-
-# wrap evaluation environment
 eval_env = F110_Wrapped(eval_env, random_map=True)
-#eval_env.set_map_path(path)
 
+eval_env.seed(1773449316)
 
-# eval_env = Monitor(eval_env, tensorboard_path, allow_early_resets=True)
-# eval_env.unwrapped.render_mode = 'human_fast'
-# eval_env.unwrapped.seed
+max_timesteps = 200_000
+min_timesteps = 50_000
 
+max_learning_rate = 0.0001
+min_learning_rate = 0.00005
+num_of_steps = 4
 
+timesteps_list = np.logspace(np.log10(min_timesteps), np.log10(max_timesteps), num=num_of_steps, endpoint=True, base=10.0, dtype=int, axis=0)
+learning_rate_list = np.logspace(np.log10(max_learning_rate), np.log10(min_learning_rate), num=num_of_steps, endpoint=True, base=10.0, dtype=None, axis=0)
 
+print("timestemp" , timesteps_list)
+print("leaning rate", learning_rate_list)
 
-
-
-#eval_env = ThrottleMaxSpeedReward(eval_env,0,1,2.5,2.5)
-#eval_env = RandomF1TenthMap(eval_env, 1)
-eval_env.seed(np.random.randint(pow(2, 31) - 1))
-
-total_timesteps = 50_000
-
-for timesteps in range (100_000, 10_000, -10_000):
-    try:
-        model = PPO.load("./train_test/best_model", eval_env)
-    except:
-        model = PPO("MlpPolicy", eval_env, gamma=0.99, gae_lambda=0.95, verbose=1,  tensorboard_log=tensorboard_path)
+for timesteps, learning_rate in zip(timesteps_list, learning_rate_list):
+        #if best_model exists, load it
+    # if os.path.exists("./train_test/best_model.zip"):
+    #     print("Loading Existing Model")
+    #     model = PPO.load("./train_test/best_model", eval_env, learning_rate=learning_rate)
+    if os.path.exists("./train_test/best_global_model.zip"):
+        print("Loading Existing Model")
+        model = PPO.load("./train_test/best_global_model", eval_env, learning_rate=learning_rate)
+    else:
+        model = PPO("MlpPolicy", eval_env, gamma=0.99, learning_rate=learning_rate, gae_lambda=0.95, verbose=0,  tensorboard_log=tensorboard_path)
 
 
     eval_callback = EvalCallback(eval_env, best_model_save_path='./train_test/',
-                                log_path='./train_test/', eval_freq=1000,
+                                log_path='./train_test/', eval_freq= int(timesteps/20),
                                 deterministic=True, render=False)
+    
+
 
     model.learn(total_timesteps=timesteps, progress_bar=True, callback=eval_callback)
+
     del model 
+
+    model = PPO.load("./train_test/best_model", eval_env)
+
+    mean_reward, _ = evaluate_policy(model, model.get_env(), n_eval_episodes=20)
+
+    #save in file the mean reward, if the file does not exist, create it
+    if not os.path.exists("./train_test/mean_reward.txt"):
+        with open("./train_test/mean_reward.txt", "w") as f:
+            f.write(f"{mean_reward}")
+            model.save("./train_test/best_global_model")
+    else:
+        #overwrite the file with the new mean reward if it is better
+        with open("./train_test/mean_reward.txt", "r") as f:
+            best_mean_reward = float(f.read())
+        if mean_reward > best_mean_reward:
+            with open("./train_test/mean_reward.txt", "w") as f:
+                f.write(f"{mean_reward}")
+            model.save("./train_test/best_global_model")
+            print("Saved Best Model")
+
+    del model 
+
+
+    
 
 
 eval_env  = gym.make('f110_gym:f110-v0', map=map_path, map_ext=map_ext, num_agents=1, timestep=timestep, integrator=Integrator.RK4)
 eval_env = F110_Wrapped(eval_env, random_map=False)
 eval_env.set_map_path(path)
 
-
-eval_callback = EvalCallback(eval_env, best_model_save_path='./train_single_map/',
-                                log_path='./train_single_map/', eval_freq=1000,
-                                deterministic=True, render=False)
-
-model = PPO.load("./train_test/best_model", eval_env)
-
-#
-
-model.learn(total_timesteps=1_000, progress_bar=True, callback=eval_callback, reset_num_timesteps=False)
+model = PPO.load("./train_test/best_global_model", eval_env)
 
 mean_reward, std_reward = evaluate_policy(model, model.get_env(), n_eval_episodes=10)
+
+print(mean_reward)
 
 # Enjoy trained agent
 vec_env = model.get_env()

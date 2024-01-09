@@ -65,6 +65,8 @@ class F110_Wrapped(gym.Wrapper):
 
         self.episode_returns = []
 
+        self.is_rendering = False
+
 
     def get_total_steps(self) -> int:
         return self.step_count
@@ -127,8 +129,7 @@ class F110_Wrapped(gym.Wrapper):
 
 
 
-        reward = 0.9
-
+        reward = 0.3
         
         if self.count < len(self.race_line_x) - 1:
             X, Y = observation['poses_x'][0], observation['poses_y'][0]
@@ -143,7 +144,7 @@ class F110_Wrapped(gym.Wrapper):
                 complete = 1#(self.count/len(self.race_line_x)) * 0.5
                 reward += complete
         else:
-            print("-------------Lap Done--------")
+            print("---- Lap Done ---->", self.map_path)
             self.count = 0
             reward += 10
 
@@ -154,17 +155,22 @@ class F110_Wrapped(gym.Wrapper):
 
         if abs(observation['poses_theta'][0]) > self.max_theta:
             done = True
+            self.count = 0
+            reward = 0
+                    #if the car go out of the track the episode is done
+        if len(self.episode_returns) > 50_000:
+            self.done = True
+            self.count = 0
+            reward = 0
+            print("Episode Done - car out of track")
+            self.reset()
 
 
-
-
-
-        #print("Reward :", reward, self.count, self.step_count)
 
 
         self.episode_returns.append(reward)
 
-        #self.render("human_fast")
+        
 
 
         return self.normalise_observations(observation['scans'][0]), reward, bool(done), info
@@ -174,7 +180,6 @@ class F110_Wrapped(gym.Wrapper):
         if self.random_map:
             path = map_utility.get_one_random_map()
             map_path = map_utility.get_formatted_map(path)
-            print("Rand Map :", map_path)
             map_ext = map_utility.map_ext
             self.update_map(map_path, map_ext, update_render=True)
             self.set_map_path(path)
@@ -202,6 +207,9 @@ class F110_Wrapped(gym.Wrapper):
         # else:
         #     x, y, t = self.start_position()
 
+        self.episode_returns = []
+
+
         observation, _, _, _ = self.env.reset(np.array([[x, y, t]]))
         return self.normalise_observations(observation['scans'][0])
 
@@ -209,9 +217,9 @@ class F110_Wrapped(gym.Wrapper):
         self.env.map_name = map_name
         self.env.map_ext = map_extension
         self.env.update_map(f"{map_name}.yaml", map_extension)
-        if update_render and self.env.renderer:
-            self.env.renderer.close()
-            self.env.renderer = None
+        # if update_render and self.env.renderer:
+        #     self.env.renderer.close()
+        #     self.env.renderer = None
 
     def seed(self, seed):
         self.current_seed = seed
