@@ -30,14 +30,14 @@ eval_env = F110_Wrapped(eval_env, random_map=True)
 
 eval_env.seed(1773449316)
 
-skip_training = True
+skip_training = False
 
 max_timesteps = 200_000
 min_timesteps = 50_000
 
-max_learning_rate = 0.0001
+max_learning_rate = 0.0005
 min_learning_rate = 0.00005
-num_of_steps = 4
+num_of_steps = 6
 
 device = 'cpu'
 
@@ -56,9 +56,9 @@ if not skip_training:
         #     model = PPO.load("./train_test/best_model", eval_env, learning_rate=learning_rate)
         if os.path.exists("./train_test/best_global_model.zip"):
             print("Loading Existing Model")
-            model = PPO.load("./train_test/best_global_model", eval_env, learning_rate=learning_rate, device=device)
+            model = PPO.load("./train_test/best_global_model", eval_env, learning_rate=linear_schedule(learning_rate), device=device)
         else:
-            model = PPO("MlpPolicy", eval_env, gamma=0.99, learning_rate=learning_rate, gae_lambda=0.95, verbose=0,  tensorboard_log=tensorboard_path, device=device)
+            model = PPO("MlpPolicy", eval_env, gamma=0.99, learning_rate=linear_schedule(learning_rate), gae_lambda=0.95, verbose=0,  tensorboard_log=tensorboard_path, device=device)
 
 
         eval_callback = EvalCallback(eval_env, best_model_save_path='./train_test/',

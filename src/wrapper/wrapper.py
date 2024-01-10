@@ -67,6 +67,8 @@ class F110_Wrapped(gym.Wrapper):
 
         self.is_rendering = False
 
+        self.last_position = {'x': None, 'y': None}
+
 
     def get_total_steps(self) -> int:
         return self.step_count
@@ -127,9 +129,10 @@ class F110_Wrapped(gym.Wrapper):
             self.env.renderer.batch.add(1, GL_POINTS, None, ('v3f/stream', [next_x * 50, next_y * 50, 0.]),
                                         ('c3B/stream', self.race_line_color))
 
+        reward = 0
+ 
+            
 
-
-        reward = 0.3
         
         if self.count < len(self.race_line_x) - 1:
             X, Y = observation['poses_x'][0], observation['poses_y'][0]
@@ -149,6 +152,24 @@ class F110_Wrapped(gym.Wrapper):
             reward += 10
 
 
+            # Check if the car has moved a significant distance from the last position
+        distance_from_last_position = np.sqrt(
+            np.power((observation["poses_x"][0] - self.last_position['x']), 2)
+            + 
+            np.power((observation["poses_y"][0] - self.last_position['y']), 2)
+                                            )
+        
+        # if distance_from_last_position > 0.0005:
+        #     reward += 0.8
+        # else:
+        #     reward = 0
+        # # Update the last position
+        reward += distance_from_last_position
+
+        self.last_position['x'] = observation['poses_x'][0]
+        self.last_position['y'] = observation['poses_y'][0]
+
+
 
 
         if observation['collisions'][0]:
@@ -162,8 +183,9 @@ class F110_Wrapped(gym.Wrapper):
             reward = 0
                     #if the car go out of the track the episode is done
         if len(self.episode_returns) > 50_000:
+            print(reward)
             self.episode_returns = []
-            self.done = True
+            done = True
             self.count = 0
             reward = 0
             print("Episod Done - Too slow")
@@ -212,6 +234,8 @@ class F110_Wrapped(gym.Wrapper):
         #     x, y, t = self.start_position()
 
         self.episode_returns = []
+
+        self.last_position = {'x': x, 'y': y}
 
 
         observation, _, _, _ = self.env.reset(np.array([[x, y, t]]))
