@@ -64,7 +64,7 @@ if not skip_training:
         eval_callback = EvalCallback(eval_env, best_model_save_path='./train_test/',
                                     log_path='./train_test/', eval_freq= int(timesteps/20),
                                     deterministic=True, render=False)
-        
+
 
 
         model.learn(total_timesteps=timesteps, progress_bar=True, callback=eval_callback)
@@ -95,7 +95,7 @@ if not skip_training:
 
 
 
-    
+
 
 
 eval_env  = gym.make('f110_gym:f110-v0', map=map_path, map_ext=map_ext, num_agents=1, timestep=timestep, integrator=Integrator.RK4)
