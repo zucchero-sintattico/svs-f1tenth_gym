@@ -13,5 +13,10 @@ setup(name='f110_gym',
                         'numba>=0.55.2',
                         'pyyaml>=5.3.1',
                         'pyglet==1.5.28',
-                        'pyopengl']
+                        'pyopengl',
+                        # our deps
+                        'stable-baselines3==2.2.1',
+                        'stable-baselines3[extra]',
+                        'Shimmy==1.3.0',
+                        'tensorboard==2.14.0']
       )
