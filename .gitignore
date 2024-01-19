@@ -201,7 +201,7 @@ pip-selfcheck.json
 runs/
 
 
-PPO_*
+train_test/PPO_*/
 
 
 ### VirtualEnv ###
