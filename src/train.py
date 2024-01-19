@@ -58,7 +58,15 @@ if not skip_training:
             print("Loading Existing Model")
             model = PPO.load("./train_test/best_global_model", eval_env, learning_rate=linear_schedule(learning_rate), device=device)
         else:
-            model = PPO("MlpPolicy", eval_env, gamma=0.99, learning_rate=linear_schedule(learning_rate), gae_lambda=0.95, verbose=0,  tensorboard_log=tensorboard_path, device=device)
+            model = PPO("MlpPolicy",
+                        eval_env,
+                        gamma=0.99,
+                        learning_rate=linear_schedule(learning_rate),
+                        gae_lambda=0.95,
+                        verbose=0, 
+                        tensorboard_log=tensorboard_path,
+                        device=device
+                        )
 
 
         eval_callback = EvalCallback(eval_env, best_model_save_path='./train_test/',
