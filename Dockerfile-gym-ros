@@ -1,0 +1,102 @@
+# MIT License
+
+# Copyright (c) 2020 Hongrui Zheng
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+FROM ros:foxy
+
+SHELL ["/bin/bash", "-c"]
+
+# dependencies
+RUN apt-get update --fix-missing && \
+    apt-get install -y git \
+    nano \
+    python3-pip \
+    libeigen3-dev \
+    tmux \
+    ros-foxy-rviz2
+RUN apt-get -y dist-upgrade
+RUN pip3 install transforms3d
+
+# f1tenth gym
+RUN git clone https://github.com/f1tenth/f1tenth_gym
+RUN cd f1tenth_gym && \
+    pip3 install -e .
+
+# ros2 gym bridge
+# RUN mkdir -p sim_ws/src/f1tenth_gym_ros
+# COPY ./f1tenth_gym_ros /sim_ws/src/f1tenth_gym_ros
+RUN git clone https://github.com/f1tenth/f1tenth_gym_ros.git /sim_ws/src/f1tenth_gym_ros && \
+    cd /sim_ws/src/f1tenth_gym_ros && \
+    git checkout 910789ad9029839abda0d7b6d66f46945fe5cef0
+RUN source /opt/ros/foxy/setup.bash && \
+    cd sim_ws/ && \
+    apt-get update --fix-missing && \
+    rosdep install -i --from-path src --rosdistro foxy -y && \
+    colcon build
+
+# our dependencies
+RUN echo "source /opt/ros/foxy/setup.bash" >> ~/.bashrc && \
+    echo "source /sim_ws/install/setup.bash" >> ~/.bashrc && \
+    pip install --upgrade pip && \
+    # ROS2 packages
+    source /opt/ros/foxy/setup.bash && \
+    ros2 pkg create --destination-directory /sim_ws/src car_node --build-type ament_python --dependencies rclpy && \
+    # f1tenth gym env branch v1.0.0
+    rm -rf /sim_ws/src/car_node/car_node && \
+    git clone --depth=1 https://github.com/f1tenth/f1tenth_gym.git /sim_ws/src/car_node/car_node && \
+    cd /sim_ws/src/car_node/car_node && \
+    git checkout cd56335eda43ff4e401331c461877227474a3ed4 && \
+    touch /sim_ws/src/car_node/car_node/__init__.py && \
+    # Put all maps maps in f1tenth gym ros
+    cd / && \
+    git clone --single-branch --branch v1.0.0 https://github.com/f1tenth/f1tenth_racetracks.git && \
+    cp f1tenth_racetracks/*/*.{png,yaml} /sim_ws/src/f1tenth_gym_ros/maps/ && \
+    # Put all maps in car_node
+    mkdir -p /sim_ws/src/car_node/car_node/map/ && \
+    mv f1tenth_racetracks /sim_ws/src/car_node/car_node/map/
+
+COPY model-gym-ros-env/car_node/setup.py /sim_ws/src/car_node/setup.py
+COPY model-gym-ros-env/car_node/car_node/main.py model-gym-ros-env/car_node/car_node/wrapper.py model-gym-ros-env/car_node/car_node/map_utility.py model-gym-ros-env/car_node/car_node/setup.py /sim_ws/src/car_node/car_node/
+COPY train_test /sim_ws/src/car_node/car_node/train_test
+
+RUN pip install -e /sim_ws/src/car_node/car_node && \
+    # pip install stable_baselines3 && \
+    # pip install 'shimmy>=0.2.1' && \
+    source /opt/ros/foxy/setup.bash && \
+    cd sim_ws/ && \
+    colcon build
+
+# RUN pip install setuptools==65.7.0 && \
+#     pip install -e /sim_ws/src/car_node/car_node && \
+#     pip install stable_baselines3 && \
+#     pip install 'shimmy>=0.2.1' && \
+#     cd sim_ws/ && \
+#     colcon build
+
+#     pip install gym[atari,accept-rom-license]==0.19.0 && \
+#     pip install 'stable-baselines3[extra]' && \
+#     pip install -e /sim_ws/src/car_node/car_node && \
+#     source /opt/ros/foxy/setup.bash && \
+#     cd sim_ws/ && \
+#     colcon build
+
+WORKDIR '/sim_ws'
+ENTRYPOINT ["/bin/bash"]

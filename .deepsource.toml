@@ -1,5 +1,12 @@
 version = 1
 
+exclude_patterns = [
+  "examples/**",
+  "gym/f110_gym/**",
+  "gym_env/share/**",
+  "docs/**"
+]
+
 [[analyzers]]
 name = "python"
 
