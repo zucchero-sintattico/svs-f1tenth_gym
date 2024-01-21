@@ -68,6 +68,8 @@ class F110_Wrapped(gym.Wrapper):
         self.is_rendering = False
 
         self.last_position = {'x': None, 'y': None}
+        
+        self.number_of_base_reward_give = 10
 
 
     def get_total_steps(self) -> int:
@@ -109,120 +111,101 @@ class F110_Wrapped(gym.Wrapper):
 
 
     def step(self, action):
+        
+        def episode_end(reason = None, reword = 0):
+            if reason is not None:
+                print("Episode End ->", reason, self.map_path)
+                
+            done = True
+            self.count = 0
+            self.episode_returns = []
+            return done, reward
 
-            #add noise to action
-            #action = action + np.random.normal(0, 0.1, 2)
 
-            action_convert = self.un_normalise_actions(action)
-            observation, _, done, info = self.env.step(np.array([action_convert]))
+        action_convert = self.un_normalise_actions(action)
+        observation, _, done, info = self.env.step(np.array([action_convert]))
 
-            self.step_count += 1
+        self.step_count += 1
 
 
 
-            next_x = self.race_line_x[self.count]
-            next_y = self.race_line_y[self.count]
+        next_x = self.race_line_x[self.count]
+        next_y = self.race_line_y[self.count]
 
-            if self.env.renderer:
-                if done:
-                    self.race_line_color = [np.random.randint(0, 255), np.random.randint(0, 255), np.random.randint(0, 255)]
-                self.env.renderer.batch.add(1, GL_POINTS, None, ('v3f/stream', [next_x * 50, next_y * 50, 0.]),
-                                            ('c3B/stream', self.race_line_color))
+        if self.env.renderer:
+            if done:
+                self.race_line_color = [np.random.randint(0, 255), np.random.randint(0, 255), np.random.randint(0, 255)]
+            self.env.renderer.batch.add(1, GL_POINTS, None, ('v3f/stream', [next_x * 50, next_y * 50, 0.]),
+                                        ('c3B/stream', self.race_line_color))
 
-            reward = 0
+        reward = 0
+        
+        
+        
+
+        aceleration_reward = action_convert[1] 
+        tourning_reward = abs(action[0]) / 2
+             
+        
+        if aceleration_reward > 5:
+            reward += aceleration_reward - tourning_reward
+        else:
+            # reward += aceleration_reward + tourning_reward
+            reward += 4 + tourning_reward
+            
+        #print(tourning_reward)
+        
+        reward = reward * 0.1
+        
+        
     
+        
+        if self.count < len(self.race_line_x) - 1:
+            X, Y = observation['poses_x'][0], observation['poses_y'][0]
+        
+            dist = np.sqrt(np.power((X - next_x), 2) + np.power((Y - next_y), 2))
+            if dist < 2:
+                self.count = self.count + 1
+                reward += 1
+                self.number_of_base_reward_give = 0
+
+            if dist < 3:
+                self.number_of_base_reward_give += 1
+                
+                if self.number_of_base_reward_give < 100:
+                    reward += 10
+                else:
+                    done, reward = episode_end("Too slow", 0)
+                        
+            else: 
+                done, reward = episode_end("To far from race line", 0)
                 
 
+        else:
+            print("----------------- Lap Done ----------------->", self.map_path)
+            self.count = 0
+            reward += 10000
             
-            if self.count < len(self.race_line_x) - 1:
-                X, Y = observation['poses_x'][0], observation['poses_y'][0]
-            
-                dist = np.sqrt(np.power((X - next_x), 2) + np.power((Y - next_y), 2))
-                if dist < 1:
-                    self.count = self.count + 1
-                    reward += 0.01
-
-                if dist < 1.5:
-                    complete = 1 #(self.count/len(self.race_line_x)) * 0.5
-                    reward += complete
-            else:
-                print("---- Lap Done ---->", self.map_path)
-                self.count = 0
-                reward += 10
-                
-            reward += 0.1
+        
+        reward = round(reward, 5)
 
 
-            #     # Check if the car has moved a significant distance from the last position
-            distance_from_last_position = \
-                np.power((observation["poses_x"][0] - self.last_position['x']), 2) \
-                +  \
-                np.power((observation["poses_y"][0] - self.last_position['y']), 2) \
-                                                
-            distance_from_last_position = round(distance_from_last_position, 4)
-            
-            if distance_from_last_position < 0.0005 :
-                reward = 0
-            
-            
-            
-            #    # Assicurati che gli input siano all'interno dei range specificati
-            # angolo_sterzo = max(self.s_min, min(self.s_max, action_convert[0]))
-            # accelerazione = max(self.v_min, min(self.v_max, action_convert[1]))
+        if observation['collisions'][0]:
+            done, reward = episode_end()
 
-            # # Normalizza i valori per ottenere un valore tra 0 e 1
-            # norm_angolo_sterzo = (angolo_sterzo - self.s_min) / (self.s_max - self.s_min)
-            # norm_accelerazione = (accelerazione - self.v_min) / (self.v_max - self.v_min)
 
-            # # Calcola la reward inversamente proporzionale alla differenza tra i due valori normalizzati
-            # reward += (1 - abs(norm_angolo_sterzo - norm_accelerazione))
-            
-            # if distance_from_last_position < 0.005:
-            #     reward += -0.5
-                
-            # if abs(action_convert[1]) < 1:
-            #     reward = 0
-            
-            
-            reward = round(reward, 4)
-            
-                    
-            
-
-            self.last_position['x'] = observation['poses_x'][0]
-            self.last_position['y'] = observation['poses_y'][0]
+        if len(self.episode_returns) > 50_000:
+            done, reward = episode_end("Too long", -1000)
 
 
 
-
-            if observation['collisions'][0]:
-                done = True
-                self.count = 0
-                reward = 0
-
-            # if abs(observation['poses_theta'][0]) > self.max_theta:
-            #     done = True
-            #     self.count = 0
-            #     reward = 0
-                        #if the car go out of the track the episode is done
-            if len(self.episode_returns) > 70_000:
-                print(reward)
-                self.episode_returns = []
-                done = True
-                self.count = 0
-                reward = -100000
-                print("Episod Done - Too slow")
+        self.episode_returns.append(reward)
+        
+       # self.render("human_fast")
 
 
 
-
-
-            self.episode_returns.append(reward)
-
-            
-
-
-            return self.normalise_observations(observation['scans'][0]), reward, bool(done), info
+        return self.normalise_observations(observation['scans'][0]), reward, bool(done), info
 
 
 

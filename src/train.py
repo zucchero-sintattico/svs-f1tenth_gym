@@ -1,21 +1,14 @@
 import gym
-from stable_baselines3 import PPO, A2C
+from stable_baselines3 import PPO
 from wrapper.wrapper import F110_Wrapped
-import yaml
-from argparse import Namespace
 from f110_gym.envs.base_classes import Integrator
 import numpy as np
 import os
-from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3.common.vec_env import SubprocVecEnv
-from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.evaluation import evaluate_policy
-from stable_baselines3.common.env_checker import check_env
 from utility.map_utility import get_map, get_formatted_map, map_ext
 from utility.linear_schedule import linear_schedule
 from stable_baselines3.common.callbacks import EvalCallback
-from stable_baselines3.common.monitor import Monitor
-from utility.SaveOnBestTrainingRewardCallback import SaveTheBestAndRestart
+
 timestep = 0.01
 tensorboard_path = './train_test/'
 
@@ -28,16 +21,18 @@ eval_env  = gym.make('f110_gym:f110-v0', map=map_path, map_ext=map_ext, num_agen
 
 eval_env = F110_Wrapped(eval_env, random_map=True)
 
+eval_env.set_map_path(path)
+
 eval_env.seed(1773449316)
 
-skip_training = False
+skip_training = True
 
-max_timesteps = 200_000
+max_timesteps = 70_000
 min_timesteps = 50_000
 
 max_learning_rate = 0.0005
 min_learning_rate = 0.00005
-num_of_steps = 6
+num_of_steps = 12
 
 device = 'cpu'
 
@@ -50,10 +45,6 @@ print("leaning rate", learning_rate_list)
 if not skip_training:
 
     for timesteps, learning_rate in zip(timesteps_list, learning_rate_list):
-            #if best_model exists, load it
-        # if os.path.exists("./train_test/best_model.zip"):
-        #     print("Loading Existing Model")
-        #     model = PPO.load("./train_test/best_model", eval_env, learning_rate=learning_rate)
         if os.path.exists("./train_test/best_global_model.zip"):
             print("Loading Existing Model")
             model = PPO.load("./train_test/best_global_model", eval_env, learning_rate=linear_schedule(learning_rate), device=device)
