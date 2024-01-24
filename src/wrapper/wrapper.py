@@ -70,6 +70,8 @@ class F110_Wrapped(gym.Wrapper):
         self.last_position = {'x': None, 'y': None}
         
         self.number_of_base_reward_give = 10
+        
+        self.one_lap_done = False
 
 
     def get_total_steps(self) -> int:
@@ -112,14 +114,15 @@ class F110_Wrapped(gym.Wrapper):
 
     def step(self, action):
         
-        def episode_end(reason = None, reword = 0):
+        def episode_end(reason = None, rew = 0):
             if reason is not None:
                 print("Episode End ->", reason, self.map_path)
                 
             done = True
             self.count = 0
             self.episode_returns = []
-            return done, reward
+            self.one_lap_done = False
+            return done, rew
 
 
         action_convert = self.un_normalise_actions(action)
@@ -138,24 +141,28 @@ class F110_Wrapped(gym.Wrapper):
             self.env.renderer.batch.add(1, GL_POINTS, None, ('v3f/stream', [next_x * 50, next_y * 50, 0.]),
                                         ('c3B/stream', self.race_line_color))
 
-        reward = 0
+        reward = 0.01
         
         
         
 
-        aceleration_reward = action_convert[1] 
-        tourning_reward = abs(action[0]) / 2
-             
+        aceleration_reward = action_convert[1]
+        tourning_reward = abs(action[0])
         
-        if aceleration_reward > 5:
-            reward += aceleration_reward - tourning_reward
+        #print("aceleration_reward", aceleration_reward)
+        # print("tourning_reward", tourning_reward)
+                
+        if aceleration_reward > 2:
+            reward += aceleration_reward #- (tourning_reward * aceleration_reward * 0.1)
+                #print("aceleration_reward > 2", reward)
         else:
-            # reward += aceleration_reward + tourning_reward
-            reward += 4 + tourning_reward
+                # reward += aceleration_reward + tourning_reward
+            reward += 2  #*  ( (100 - self.number_of_base_reward_give) / 100)    #(5 + tourning_reward ) *
+                #print("aceleration_reward < 4", reward)
+                
+                #print(reward)
             
-        #print(tourning_reward)
-        
-        reward = reward * 0.1
+        reward = reward * 0.01
         
         
     
@@ -166,42 +173,46 @@ class F110_Wrapped(gym.Wrapper):
             dist = np.sqrt(np.power((X - next_x), 2) + np.power((Y - next_y), 2))
             if dist < 2:
                 self.count = self.count + 1
-                reward += 1
+                reward +=  0.1
                 self.number_of_base_reward_give = 0
 
-            if dist < 3:
+            if dist < 2.5:
                 self.number_of_base_reward_give += 1
                 
                 if self.number_of_base_reward_give < 100:
-                    reward += 10
+                    reward += 0.5 
                 else:
-                    done, reward = episode_end("Too slow", 0)
+                    #print("Too slow")
+                    reward -= 0.1 
+                    #done, reward = episode_end("Too slow", -10)
                         
-            else: 
-                done, reward = episode_end("To far from race line", 0)
+            if dist > 5: 
+                done, reward = episode_end("To far from race line", -10)
                 
 
         else:
             print("----------------- Lap Done ----------------->", self.map_path)
             self.count = 0
-            reward += 10000
+            self.one_lap_done = True
             
         
-        reward = round(reward, 5)
+        reward = round(reward, 6)
+        
+        #print("reward", reward)
 
 
         if observation['collisions'][0]:
-            done, reward = episode_end()
+            done, reward = episode_end(rew = -30)
 
 
         if len(self.episode_returns) > 50_000:
-            done, reward = episode_end("Too long", -1000)
+            done, reward = episode_end("Too long", -10)
 
 
 
         self.episode_returns.append(reward)
         
-       # self.render("human_fast")
+        #self.render("human")
 
 
 

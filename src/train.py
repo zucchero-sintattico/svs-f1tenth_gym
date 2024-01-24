@@ -1,5 +1,5 @@
 import gym
-from stable_baselines3 import PPO
+#from stable_baselines3 import PPO
 from wrapper.wrapper import F110_Wrapped
 from f110_gym.envs.base_classes import Integrator
 import numpy as np
@@ -8,31 +8,32 @@ from stable_baselines3.common.evaluation import evaluate_policy
 from utility.map_utility import get_map, get_formatted_map, map_ext
 from utility.linear_schedule import linear_schedule
 from stable_baselines3.common.callbacks import EvalCallback
+from rl_zoo3 import PPO
 
 timestep = 0.01
 tensorboard_path = './train_test/'
 
 
-map = "Zandvoort"
+map = "YasMarina"
 path = get_map(map)
 map_path = get_formatted_map(path)
 
 eval_env  = gym.make('f110_gym:f110-v0', map=map_path, map_ext=map_ext, num_agents=1, timestep=timestep, integrator=Integrator.RK4)
 
-eval_env = F110_Wrapped(eval_env, random_map=True)
+eval_env = F110_Wrapped(eval_env, random_map=False)
 
 eval_env.set_map_path(path)
 
 eval_env.seed(1773449316)
 
-skip_training = True
+skip_training = False
 
-max_timesteps = 70_000
-min_timesteps = 50_000
+max_timesteps = 40_000
+min_timesteps = 20_000
 
 max_learning_rate = 0.0005
-min_learning_rate = 0.00005
-num_of_steps = 12
+min_learning_rate = 0.0001
+num_of_steps = 100
 
 device = 'cpu'
 
@@ -45,19 +46,38 @@ print("leaning rate", learning_rate_list)
 if not skip_training:
 
     for timesteps, learning_rate in zip(timesteps_list, learning_rate_list):
+        
+        
+        eval_env  = gym.make('f110_gym:f110-v0', map=map_path, map_ext=map_ext, num_agents=1, timestep=timestep, integrator=Integrator.RK4)
+
+        eval_env = F110_Wrapped(eval_env, random_map=False)
+
+        eval_env.set_map_path(path)
+
+        eval_env.seed(round(np.random.rand()*1000000000))
+        
         if os.path.exists("./train_test/best_global_model.zip"):
             print("Loading Existing Model")
             model = PPO.load("./train_test/best_global_model", eval_env, learning_rate=linear_schedule(learning_rate), device=device)
         else:
-            model = PPO("MlpPolicy",
-                        eval_env,
-                        gamma=0.99,
-                        learning_rate=linear_schedule(learning_rate),
-                        gae_lambda=0.95,
-                        verbose=0, 
-                        tensorboard_log=tensorboard_path,
-                        device=device
-                        )
+            if os.path.exists("./src/base_model.zip"):
+                print("Loading Base Model")
+                model = PPO.load("./src/base_model.zip", eval_env,
+                            learning_rate=linear_schedule(learning_rate),
+                            verbose=0, 
+                            tensorboard_log=tensorboard_path,
+                            device=device
+                            )
+            else:
+                model = PPO("MlpPolicy",
+                            eval_env,
+                            learning_rate=linear_schedule(learning_rate),
+                            verbose=0, 
+                            tensorboard_log=tensorboard_path,
+                            device=device
+                            ) 
+                model.save("./src/base_model")   
+
 
 
         eval_callback = EvalCallback(eval_env, best_model_save_path='./train_test/',
