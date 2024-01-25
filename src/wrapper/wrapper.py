@@ -14,6 +14,8 @@ import csv
 def logger(map, event, reword, lap_time):
     #logger in a csv file
     map = map.split("/")[-1]
+    reword = round(reword, 6)
+    lap_time = round(lap_time, 6)
     with open('log.csv', 'a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow([map, event, reword, lap_time])
@@ -216,7 +218,7 @@ class F110_Wrapped(gym.Wrapper):
             
             self.count = 0
             if self.one_lap_done:
-                logger(self.map_path, "Lap Done", sum(self.episode_returns), len(self.episode_returns) * 0.01)
+                logger(self.map_path, "lap_done", sum(self.episode_returns), len(self.episode_returns) * 0.01)
                 self.episode_returns = []
                 self.one_lap_done = False
             else:
@@ -240,7 +242,7 @@ class F110_Wrapped(gym.Wrapper):
 
 
         if len(self.episode_returns) > 50_000:
-            logger(self.map_path, "Too long", sum(self.episode_returns), len(self.episode_returns) * 0.01)
+            logger(self.map_path, "too_slow", sum(self.episode_returns), len(self.episode_returns) * 0.01)
             done, reward = episode_end("Too long", -10)
             
 
