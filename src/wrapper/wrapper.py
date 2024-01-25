@@ -189,9 +189,14 @@ class F110_Wrapped(gym.Wrapper):
             if  not self.one_lap_done:
                 steps_done = len(self.episode_returns)            
             elif self.one_lap_done:
-                steps_done = len(self.episode_returns) / 2         
+                steps_done = len(self.episode_returns) / 2   
                 
-            reward += (( steps_goal - steps_done ) * 0.05) + 400
+            k = (steps_done - steps_goal)/steps_goal
+            
+            reward += (1-k) * 100 
+   
+                
+            #reward += (( steps_goal - steps_done ) * 0.05) + 400
                 
             print("----------------- Lap Done ----------------->", self.map_path, len(self.episode_returns) * 0.01, reward)
             
