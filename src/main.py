@@ -1,7 +1,9 @@
 import argparse
 import os
+import random
 
-from train import train
+from train import train, run
+
 
 base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 map_path = os.path.join(base_path, "map", "f1tenth_racetracks")
@@ -34,16 +36,23 @@ if __name__ == '__main__':
 
     run_parser = subparser.add_parser('run', help='Run the model in the simulator')
     run_parser.add_argument('-m', '--map', type=str, help='Map to train the model on. Default: random maps', default='random')
+    run_parser.add_argument('--timesteps', type=float, help='Number of timesteps to train the model. Default: 0.01', default=0.01)
 
     args = parser.parse_args()
 
+    available_maps = get_available_maps()
+    if 'random' not in args.map and args.map not in available_maps:
+        print(f"Map '{args.map}' not found. Available maps:")
+        print(available_maps)
+        exit(1)
+
     if args.list:
         print("Available maps:")
-        print(get_available_maps())
+        print(available_maps)
         exit(0)
     elif args.command == 'train':
         print("Training the model")
-        train(  args.map == 'random',
+        train(args.map == 'random',
                 args.map,
                 args.timesteps,
                 args.min_timesteps,
@@ -54,7 +63,9 @@ if __name__ == '__main__':
         exit(0)
     elif args.command == 'run':
         print("Running the model")
-        print(args)
+        if args.map == 'random':
+            args.map = random.choice(available_maps)
+        run(args.map, args.timesteps)
         exit(0)
     else:
         print("Invalid command")
