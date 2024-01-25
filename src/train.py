@@ -17,7 +17,8 @@ def train(
         max_timesteps: int,
         min_learning_rate: float,
         max_learning_rate: float,
-        num_of_steps: int) -> None:
+        num_of_steps: int,
+        optimize_speed: bool) -> None:
 
     tensorboard_path = './train_test/'
     device = 'cpu'
@@ -30,6 +31,7 @@ def train(
     eval_env = F110_Wrapped(eval_env, random_map=True)
     eval_env.set_map_path(path)
     eval_env.seed(1773449316)
+    eval_env.set_optimize_speed(optimize_speed)
 
     timesteps_list = np.logspace(np.log10(min_timesteps), np.log10(max_timesteps), num=num_of_steps, endpoint=True, base=10.0, dtype=int, axis=0)
     learning_rate_list = np.logspace(np.log10(max_learning_rate), np.log10(min_learning_rate), num=num_of_steps, endpoint=True, base=10.0, dtype=None, axis=0)

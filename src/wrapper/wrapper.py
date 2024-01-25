@@ -10,7 +10,6 @@ import utility.map_utility as map_utility
 from typing import Any, Dict, List, Optional, SupportsFloat, Tuple, Union
 import csv
 
-
 def logger(map, event, reword, lap_time):
     #logger in a csv file
     map = map.split("/")[-1]
@@ -20,11 +19,6 @@ def logger(map, event, reword, lap_time):
         writer = csv.writer(file)
         writer.writerow([map, event, reword, lap_time])
 
-  
-    
-
-    
-
 def convert_range(value, input_range, output_range):
     # converts value(s) from range to another range
     # ranges ---> [min, max]
@@ -32,7 +26,6 @@ def convert_range(value, input_range, output_range):
     in_range = in_max - in_min
     out_range = out_max - out_min
     return (((value - in_min) * out_range) / in_range) + out_min
-
 
 class F110_Wrapped(gym.Wrapper):
     """
@@ -89,10 +82,9 @@ class F110_Wrapped(gym.Wrapper):
         
         self.one_lap_done = False
 
-
     def get_total_steps(self) -> int:
         return self.step_count
-    
+
     def get_episode_rewards(self) -> List[float]:
         """
         Returns the rewards of all the episodes
@@ -101,9 +93,14 @@ class F110_Wrapped(gym.Wrapper):
         """
         return self.episode_returns
 
+    def set_optimize_speed(self, optimize_speed: bool) -> None:
+        """
+        Sets the optimize speed flag
 
-  
-
+        :param optimize_speed:
+        :return:
+        """
+        self.optimize_speed = optimize_speed
 
     def set_raceliens(self):
         if self.map_path is not None:
@@ -158,12 +155,13 @@ class F110_Wrapped(gym.Wrapper):
         
         
         aceleration_reward = action_convert[1]
-                
-        if aceleration_reward > 2:
-            reward += aceleration_reward 
-        else:
-            reward += 2  
-            
+
+        if self.optimize_speed:
+            if aceleration_reward > 2:
+                reward += aceleration_reward
+            else:
+                reward += 2
+
         reward = reward * 0.01
     
         

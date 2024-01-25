@@ -16,6 +16,11 @@ def get_available_maps():
             maps.append(item)
     return maps
 
+def check_map(map_name):
+    if map_name not in get_available_maps():
+        print(f"Map '{map_name}' not found. Available maps:")
+        print(get_available_maps())
+        exit(1)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -33,6 +38,7 @@ if __name__ == '__main__':
     train_parser.add_argument('--min-learning-rate', type=float, help='Learning rate for the model. Default: 0.0005', default=0.0005)
     train_parser.add_argument('--max-learning-rate', type=float, help='Learning rate for the model. Default: 0.0001', default=0.0001)
     train_parser.add_argument('--num-of-steps', type=int, help='Number of steps to train the model. Default: 10', default=10)
+    train_parser.add_argument('--optimize-speed', action='store_true', help='Save the model to the specified path. Default: None')
 
     run_parser = subparser.add_parser('run', help='Run the model in the simulator')
     run_parser.add_argument('-m', '--map', type=str, help='Map to train the model on. Default: random maps', default='random')
@@ -41,17 +47,15 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     available_maps = get_available_maps()
-    if 'random' not in args.map and args.map not in available_maps:
-        print(f"Map '{args.map}' not found. Available maps:")
-        print(available_maps)
-        exit(1)
 
     if args.list:
         print("Available maps:")
-        print(available_maps)
+        print(get_available_maps())
         exit(0)
     elif args.command == 'train':
         print("Training the model")
+        if 'random' not in args.map:
+            check_map(args.map)
         train(args.map == 'random',
                 args.map,
                 args.timesteps,
@@ -59,12 +63,14 @@ if __name__ == '__main__':
                 args.max_timesteps,
                 args.min_learning_rate,
                 args.max_learning_rate,
-                args.num_of_steps)
+                args.num_of_steps,
+                args.optimize_speed)
         exit(0)
     elif args.command == 'run':
         print("Running the model")
         if args.map == 'random':
             args.map = random.choice(available_maps)
+        check_map(args.map)
         run(args.map, args.timesteps)
         exit(0)
     else:
