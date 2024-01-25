@@ -34,8 +34,6 @@ Our abstract
 
 \section{Introduction}
 
-Section \cite{test}
-
 \begin{itemize}
     \item Descrizione del contesto e dell'importanza della guida autonoma nelle macchine.
 
@@ -43,8 +41,16 @@ Section \cite{test}
 
 \end{itemize}
 
+The autonomous driving represents a vital area of research in the automotive technology advancement with applications stretching from city roads to extreme motorsport environments. In the context of racing cars, there is a unique challenge of demand for excellent performance and timely decisions that prompts the adoption of innovative approaches. In this work, we focus on the application of Reinforcement Learning, which is a machine learning paradigm, in developing an adaptive and high-performance autonomous driving system for racing cars with specific emphasis on using Proximal Policy Optimization (PPO) algorithm.
 
-\section{Stato dell'arte}
+Autonomous driving in motorsports such as Formula 1 requires a synergy between vehicle control precision and adaptability to changing track conditions. The use of Reinforcement Learning algorithms offers a promising approach because it allows the vehicle to learn optimal strategies through interaction with its surrounding environment based on rewards and penalties. In our study, we aim at enhancing the performance of race cars by implementing the PPO algorithm known for its stability and ability to handle continuous action spaces.
+
+The novelty of this research lies in the model training approach that incorporates specific waypoints of circuits into the training maps. This approach seeks to improve the vehicle’s ability to follow optimal paths while considering unique features of circuits used in car racing competitions. By analyzing and optimizing waypoint-based trajectories, we aim to show how our autonomous driving system can dynamically adjust its driving path to fit the lane changes with better lap timing and dealing with adverse conditions.
+
+In summary, this work aims at contributing towards autonomous driving in motorsport by proposing an innovative approach based on Reinforcement Learning and PPO which emphasizes the necessity for consideration of waypoints to optimize navigation in particular circuits. The findings are anticipated to provide a solid ground for future development of advanced autonomous driving systems within motor racing.
+
+
+\section{State of the art}
 
 \begin{itemize}
     \item Una revisione della letteratura su progetti simili e sull'uso di Reinforcement Learning nelle applicazioni di guida autonoma.
@@ -52,6 +58,18 @@ Section \cite{test}
     \item Discussione delle sfide e delle soluzioni proposte da altri ricercatori nel campo.
 
 \end{itemize}
+
+The advent of driverless car research has made great strides with applications ranging from road cars to race cars. In motor racing, the incorporation of autonomous driving systems has become a significant challenge necessitating sophisticated solutions to tackle competitive environment peculiarities. Different approaches and relevant study findings upon literature review provide a full picture of the present landscape.
+
+One of the most important milestones is the increasing adoption of machine learning algorithms focusing on Reinforcement Learning. The use of reward and penalty based techniques along with dynamic interaction between agent and environment have been shown to be effective in enhancing performance in autonomous driving. Researches such as Silver et al. (2016) \cite{first} have made notable successes in training deep neural networks through Reinforcement Learning for autonomous driving in contexts akin to motorcar racing.
+
+In the specific framework of motorcar races, the optimal handling of vehicles calls for a combination of accuracy, speed and adaptability to changing conditions on the track.
+
+Molti studi si sono concentrati su alcune tecniche di controllo tradizionali, come il model predictive control (MPC) (Lim, Hedrick \& McMahon, 2006) \cite{second}. Sul lato negativo, questi approcci spesso sono limitati nel modo in cui gestiscono complessità dinamiche dei circuiti di corse o della capacità di apprendimento automatico.
+
+Proximal Policy Optimization (PPO) is one of the algorithms that has become popular for reinforcement learning algorithm due to its ability to handle continuous action spaces and stability during training (Schulman et al., 2017) \cite{third}. This makes PPO particularly useful in applications where precision as well as dynamic management is important such as automobile racing.
+
+Our approach is different from existing literature in introducing a specific use of race track way-points into training maps. This decision aims at improving the model’s ability to follow optimal trajectories over particular circuits taking into account unique characteristics of each track. In summary, our work lies at the intersection between Reinforcement Learning research for autonomous driving and specific needs of auto racing by introducing an innovative approach based on PPO and accurate use of waypoints on tracks. Next section provides detailed methodology, illustrating how we implemented and trained our model to achieve best results on selected circuits.
 
 
 \section{Metodologia}
@@ -64,6 +82,33 @@ Section \cite{test}
     \item Dettagli sui waypoints e su come sono stati integrati nel processo di addestramento.
 
 \end{itemize}
+
+La nostra metodologia mira a fornire una visione approfondita dell'architettura del modello, del processo di addestramento e dell'integrazione dei waypoints nei circuiti selezionati. L'obiettivo è presentare un quadro chiaro e riproducibile del nostro approccio alla guida autonoma basata su Reinforcement Learning, con un focus particolare sull'utilizzo dell'algoritmo PPO.
+
+\subsection{Architettura del modello}
+Il cuore del nostro sistema è una rete neurale profonda addestrata attraverso l'algoritmo PPO. La rete neurale accetta input relativi allo stato attuale del veicolo, quali posizione, velocità, angolo di sterzata e dati sensoriali provenienti da telecamere e sensori a ultrasuoni. Il modello produce un'azione di controllo, rappresentata da una distribuzione di probabilità su possibili comandi, consentendo una gestione dinamica e continua del veicolo.
+
+\subsection{Addestramento del modello}
+Abbiamo utilizzato una vasta raccolta di dati provenienti da simulazioni di guida su diversi circuiti. Ogni episodio di addestramento ha coinvolto il modello che interagisce con l'ambiente simulato, ricevendo ricompense basate su metriche di prestazione come tempi di percorrenza, traiettorie seguite e reazioni a condizioni impreviste come curve strette o variazioni di superficie stradale. L'addestramento è stato eseguito per numerosi cicli, garantendo la convergenza del modello verso strategie ottimali di guida.
+
+\subsection{Integrazione dei waypoints}
+
+Un aspetto distintivo della nostra metodologia è l'integrazione dei waypoints dei circuiti nelle mappe di addestramento.
+%
+Abbiamo identificato e annotato accuratamente i waypoints su ciascun circuito utilizzato, indicando punti chiave sulla traiettoria ottimale.
+%
+Durante l'addestramento, il modello è stato incentivato a seguire i waypoints, fornendo una guida più precisa e adattandosi alle specificità di ciascun circuito.
+
+\subsection{Raccolta e prepoccessing dei dati}
+La raccolta dei dati è stata effettuata attraverso simulazioni realistiche, catturando scenari di guida diversificati. I dati sono stati preprocessati per normalizzare le informazioni di input e garantire una distribuzione uniforme delle condizioni di guida, evitando bias durante l'addestramento.
+
+\subsection{Parametri e configurazioni}
+Abbiamo attentamente selezionato i parametri dell'algoritmo PPO, tra cui il tasso di apprendimento, il coefficiente di entropia e la dimensione dei minibatch, attraverso sperimentazioni iterative per massimizzare le prestazioni del modello su circuiti specifici.
+
+\medskip
+
+Questa metodologia integrata ha consentito l'addestramento di un modello di guida autonoma altamente adattivo, capace di gestire in modo dinamico i circuiti di gara e di ottimizzare le prestazioni in risposta a variazioni ambientali e specificità della pista. Nella sezione successiva, presenteremo i risultati dei nostri esperimenti, evidenziando le capacità e le limitazioni del nostro approccio.
+
 
 \section{Esperimenti}
 
@@ -95,7 +140,6 @@ Section \cite{test}
     \item Sottolineare l'importanza del vostro contributo e le potenziali implicazioni nella guida autonoma.
 
 \end{itemize}
-
 
 \bibliographystyle{IEEEtran}
 \bibliography{bibliography}
