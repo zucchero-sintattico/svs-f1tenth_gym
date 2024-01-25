@@ -141,7 +141,7 @@ class F110_Wrapped(gym.Wrapper):
             self.env.renderer.batch.add(1, GL_POINTS, None, ('v3f/stream', [next_x * 50, next_y * 50, 0.]),
                                         ('c3B/stream', self.race_line_color))
 
-        reward = 0.01
+        reward = 0
         
         
         
@@ -153,16 +153,12 @@ class F110_Wrapped(gym.Wrapper):
         # print("tourning_reward", tourning_reward)
                 
         if aceleration_reward > 2:
-            reward += aceleration_reward #- (tourning_reward * aceleration_reward * 0.1)
-                #print("aceleration_reward > 2", reward)
+            reward += aceleration_reward 
         else:
-                # reward += aceleration_reward + tourning_reward
-            reward += 2  #*  ( (100 - self.number_of_base_reward_give) / 100)    #(5 + tourning_reward ) *
-                #print("aceleration_reward < 4", reward)
-                
-                #print(reward)
+            reward += 2  
             
-        reward = reward * 0.01
+        reward = reward * 0.01 #* self.step_count * 0.000000001
+        
         
         
     
@@ -173,27 +169,42 @@ class F110_Wrapped(gym.Wrapper):
             dist = np.sqrt(np.power((X - next_x), 2) + np.power((Y - next_y), 2))
             if dist < 2:
                 self.count = self.count + 1
-                reward +=  0.1
+                reward +=  0.01
                 self.number_of_base_reward_give = 0
 
             if dist < 2.5:
                 self.number_of_base_reward_give += 1
                 
                 if self.number_of_base_reward_give < 100:
-                    reward += 0.5 
+                    reward += 0.05 
                 else:
-                    #print("Too slow")
-                    reward -= 0.1 
-                    #done, reward = episode_end("Too slow", -10)
+                    reward -= 1
                         
-            if dist > 5: 
-                done, reward = episode_end("To far from race line", -10)
+            if dist > 3: 
+                reward -= 1
                 
 
-        else:
-            print("----------------- Lap Done ----------------->", self.map_path)
+        else:  
+            steps_goal = self.count       
+            if  not self.one_lap_done:
+                steps_done = len(self.episode_returns)            
+            elif self.one_lap_done:
+                steps_done = len(self.episode_returns) / 2         
+                
+            reward += (( steps_goal - steps_done ) * 0.0005) + 4
+                
+            print("----------------- Lap Done ----------------->", self.map_path, len(self.episode_returns) * 0.01, reward)
+            
             self.count = 0
-            self.one_lap_done = True
+            if self.one_lap_done:
+                self.episode_returns = []
+                self.one_lap_done = False
+            else:
+                self.one_lap_done = True
+
+                
+            
+            
             
         
         reward = round(reward, 6)
