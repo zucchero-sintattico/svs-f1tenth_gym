@@ -8,6 +8,22 @@ from argparse import Namespace
 from pyglet.gl import GL_POINTS
 import utility.map_utility as map_utility
 from typing import Any, Dict, List, Optional, SupportsFloat, Tuple, Union
+import csv
+
+
+def logger(map, event, reword, lap_time):
+    #logger in a csv file
+    map = map.split("/")[-1]
+    reword = round(reword, 6)
+    lap_time = round(lap_time, 6)
+    with open('log.csv', 'a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow([map, event, reword, lap_time])
+
+  
+    
+
+    
 
 def convert_range(value, input_range, output_range):
     # converts value(s) from range to another range
@@ -202,6 +218,7 @@ class F110_Wrapped(gym.Wrapper):
             
             self.count = 0
             if self.one_lap_done:
+                logger(self.map_path, "lap_done", sum(self.episode_returns), len(self.episode_returns) * 0.01)
                 self.episode_returns = []
                 self.one_lap_done = False
             else:
@@ -218,11 +235,16 @@ class F110_Wrapped(gym.Wrapper):
 
 
         if observation['collisions'][0]:
+            logger(self.map_path, "collisions", sum(self.episode_returns), len(self.episode_returns) * 0.01)
             done, reward = episode_end(rew = -30)
+            
+            
 
 
         if len(self.episode_returns) > 50_000:
+            logger(self.map_path, "too_slow", sum(self.episode_returns), len(self.episode_returns) * 0.01)
             done, reward = episode_end("Too long", -10)
+            
 
 
 
