@@ -20,7 +20,7 @@ map_path = get_formatted_map(path)
 
 eval_env  = gym.make('f110_gym:f110-v0', map=map_path, map_ext=map_ext, num_agents=1, timestep=timestep, integrator=Integrator.RK4)
 
-eval_env = F110_Wrapped(eval_env, random_map=False)
+eval_env = F110_Wrapped(eval_env, random_map=True)
 
 eval_env.set_map_path(path)
 
