@@ -145,9 +145,6 @@ class F110_Wrapped(gym.Wrapper):
         observation, _, done, info = self.env.step(np.array([action_convert]))
 
         self.step_count += 1
-
-
-
         next_x = self.race_line_x[self.count]
         next_y = self.race_line_y[self.count]
 
@@ -160,23 +157,14 @@ class F110_Wrapped(gym.Wrapper):
         reward = 0
         
         
-        
-
         aceleration_reward = action_convert[1]
-        tourning_reward = abs(action[0])
-        
-        #print("aceleration_reward", aceleration_reward)
-        # print("tourning_reward", tourning_reward)
                 
         if aceleration_reward > 2:
             reward += aceleration_reward 
         else:
             reward += 2  
             
-        reward = reward * 0.01 #* self.step_count * 0.000000001
-        
-        
-        
+        reward = reward * 0.01
     
         
         if self.count < len(self.race_line_x) - 1:
@@ -210,28 +198,21 @@ class F110_Wrapped(gym.Wrapper):
             k = (steps_done - steps_goal)/steps_goal
             
             reward += (1-k) * 100 
-   
-                
-            #reward += (( steps_goal - steps_done ) * 0.05) + 400
-                
+
             print("----------------- Lap Done ----------------->", self.map_path, len(self.episode_returns) * 0.01, reward)
             
             self.count = 0
+            
             if self.one_lap_done:
                 logger(self.map_path, "lap_done", sum(self.episode_returns), len(self.episode_returns) * 0.01)
                 self.episode_returns = []
                 self.one_lap_done = False
             else:
                 self.one_lap_done = True
-
-                
-            
-            
             
         
         reward = round(reward, 6)
         
-        #print("reward", reward)
 
 
         if observation['collisions'][0]:
@@ -240,18 +221,11 @@ class F110_Wrapped(gym.Wrapper):
             
             
 
-
         if len(self.episode_returns) > 50_000:
             logger(self.map_path, "too_slow", sum(self.episode_returns), len(self.episode_returns) * 0.01)
             done, reward = episode_end("Too long", -10)
             
-
-
-
         self.episode_returns.append(reward)
-        
-        #self.render("human")
-
 
 
         return self.normalise_observations(observation['scans'][0]), reward, bool(done), info
