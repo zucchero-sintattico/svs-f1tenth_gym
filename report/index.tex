@@ -34,54 +34,90 @@ Our abstract
 
 \section{Introduction}
 
-\begin{itemize}
-    \item Descrizione del contesto e dell'importanza della guida autonoma nelle macchine.
+% \begin{itemize}
+%     \item Descrizione del contesto e dell'importanza della guida autonoma nelle macchine.
 
-    \item Presentazione del vostro obiettivo di ricerca e della vostra ipotesi.
+%     \item Presentazione del vostro obiettivo di ricerca e della vostra ipotesi.
 
-\end{itemize}
+% \end{itemize}
 
-The autonomous driving represents a vital area of research in the automotive technology advancement with applications stretching from city roads to extreme motorsport environments. In the context of racing cars, there is a unique challenge of demand for excellent performance and timely decisions that prompts the adoption of innovative approaches. In this work, we focus on the application of Reinforcement Learning, which is a machine learning paradigm, in developing an adaptive and high-performance autonomous driving system for racing cars with specific emphasis on using Proximal Policy Optimization (PPO) algorithm.
+The autonomous driving represents a vital area of research in the automotive technology advancement with applications stretching from city roads to extreme motor sport environments.
+%
+In the context of racing cars, there is a unique challenge of demand for excellent performance and timely decisions that prompts the adoption of innovative approaches.
+%
+In this work, we focus on the application of \emph{Reinforcement Learning}, which is a machine learning paradigm, in developing an adaptive and high-performance autonomous driving system for racing cars with specific emphasis on using \emph{Proximal Policy Optimization} (PPO) algorithm.
 
-Autonomous driving in motorsports such as Formula 1 requires a synergy between vehicle control precision and adaptability to changing track conditions. The use of Reinforcement Learning algorithms offers a promising approach because it allows the vehicle to learn optimal strategies through interaction with its surrounding environment based on rewards and penalties. In our study, we aim at enhancing the performance of race cars by implementing the PPO algorithm known for its stability and ability to handle continuous action spaces.
+Autonomous driving in motor sports such as Formula 1 requires a synergy between vehicle control precision and adaptability to changing track conditions.
+%
+The use of Reinforcement Learning algorithms offers a promising approach because it allows the vehicle to learn optimal strategies through interaction with its surrounding environment based on \emph{rewards} and \emph{penalties}.
+%
+In our study, we aim at enhancing the performance of race cars by using the PPO algorithm known for its stability and ability to handle continuous action spaces \cite{PPOOpenAI}.
 
-The novelty of this research lies in the model training approach that incorporates specific waypoints of circuits into the training maps. This approach seeks to improve the vehicle’s ability to follow optimal paths while considering unique features of circuits used in car racing competitions. By analyzing and optimizing waypoint-based trajectories, we aim to show how our autonomous driving system can dynamically adjust its driving path to fit the lane changes with better lap timing and dealing with adverse conditions.
+The novelty of this research lies in the model training approach that incorporates specific waypoints of circuits into the training maps.
+%
+This approach seeks to improve the vehicle’s ability to follow optimal paths while considering unique features of circuits used in car racing competitions.
+%
+By analyzing and optimizing waypoint-based trajectories, we aim to show how our autonomous driving system can dynamically adjust its driving path to fit the lane changes with better lap timing and dealing with adverse conditions.
 
-In summary, this work aims at contributing towards autonomous driving in motorsport by proposing an innovative approach based on Reinforcement Learning and PPO which emphasizes the necessity for consideration of waypoints to optimize navigation in particular circuits. The findings are anticipated to provide a solid ground for future development of advanced autonomous driving systems within motor racing.
+After training the model using PPO in a simulated environment, it will subsequently be used to predict the trajectory and speed of a vehicle inside a ROS-enabled simulator.
 
+In summary, our work involves training a model in OpenAI’s simulator that then can be used in ROS simulator.
 
 \section{State of the art}
 
-\begin{itemize}
-    \item Una revisione della letteratura su progetti simili e sull'uso di Reinforcement Learning nelle applicazioni di guida autonoma.
+% \begin{itemize}
+%     \item Una revisione della letteratura su progetti simili e sull'uso di Reinforcement Learning nelle applicazioni di guida autonoma.
 
-    \item Discussione delle sfide e delle soluzioni proposte da altri ricercatori nel campo.
+%     \item Discussione delle sfide e delle soluzioni proposte da altri ricercatori nel campo.
 
-\end{itemize}
+% \end{itemize}
 
-The advent of driverless car research has made great strides with applications ranging from road cars to race cars. In motor racing, the incorporation of autonomous driving systems has become a significant challenge necessitating sophisticated solutions to tackle competitive environment peculiarities. Different approaches and relevant study findings upon literature review provide a full picture of the present landscape.
+The advent of driverless car research has made great strides with applications ranging from road cars to race cars.
+%
+In motor racing, the incorporation of autonomous driving systems has become a significant challenge necessitating sophisticated solutions to tackle competitive environment peculiarities.
+%
+Different approaches and relevant study findings upon literature review provide a full picture of the present landscape and major techniques of autonomous driving approaches.
 
-One of the most important milestones is the increasing adoption of machine learning algorithms focusing on Reinforcement Learning. The use of reward and penalty based techniques along with dynamic interaction between agent and environment have been shown to be effective in enhancing performance in autonomous driving. Researches such as Silver et al. (2016) \cite{first} have made notable successes in training deep neural networks through Reinforcement Learning for autonomous driving in contexts akin to motorcar racing.
+Many studies have focused on a few traditional control techniques such as model predictive control (MPC) by Schwenzer et al. \cite{MPC}. 
+% TODO: descrivi MPC
 
-In the specific framework of motorcar races, the optimal handling of vehicles calls for a combination of accuracy, speed and adaptability to changing conditions on the track.
+Another significant approach is the PID \cite{ADAPTIVE_PID}
+% TODO: descrivi PID
 
-Molti studi si sono concentrati su alcune tecniche di controllo tradizionali, come il model predictive control (MPC) (Lim, Hedrick \& McMahon, 2006) \cite{second}. Sul lato negativo, questi approcci spesso sono limitati nel modo in cui gestiscono complessità dinamiche dei circuiti di corse o della capacità di apprendimento automatico.
+On the downside, these approaches are often restricted in how well they handle dynamic complexities of race circuits and machine learning overfitting could be a resource in this particular use case.
 
-Proximal Policy Optimization (PPO) is one of the algorithms that has become popular for reinforcement learning algorithm due to its ability to handle continuous action spaces and stability during training (Schulman et al., 2017) \cite{third}. This makes PPO particularly useful in applications where precision as well as dynamic management is important such as automobile racing.
+One of the most important milestones is the increasing adoption of machine learning algorithms focusing on Reinforcement Learning in order to achieve a driving style as like as possible as a human driver, but free from distraction and emotions that can have a negative impact on the performance \cite{andru}.
+%
+The use of reward and penalty based techniques along with dynamic interaction between agent and environment have been shown to be effective in enhancing performance in autonomous driving.
+%
+Researches such as Silver et al. (2016) \cite{GO_DNN} have made notable successes in training deep neural networks through Reinforcement Learning for autonomous driving in contexts akin to car racing.
 
-Our approach is different from existing literature in introducing a specific use of race track way-points into training maps. This decision aims at improving the model’s ability to follow optimal trajectories over particular circuits taking into account unique characteristics of each track. In summary, our work lies at the intersection between Reinforcement Learning research for autonomous driving and specific needs of auto racing by introducing an innovative approach based on PPO and accurate use of waypoints on tracks. Next section provides detailed methodology, illustrating how we implemented and trained our model to achieve best results on selected circuits.
+In the specific framework of car races, the optimal handling of vehicles calls for a combination of accuracy, speed and adaptability to the change of the track.
 
+Proximal Policy Optimization (PPO) is one of the algorithms that has become popular for Reinforcement Learning algorithm due to its ability to handle continuous action spaces and stability during training (Schulman et al., 2017) \cite{PPOOpenAI}.
+%
+This makes PPO particularly useful in applications where precision as well as dynamic management of the car is important such as automobile racing.
+
+Our approach is different from existing literature in introducing a specific use of race track waypoints into training maps.
+%
+This decision aims at improving the model’s ability to follow optimal trajectories over particular circuits taking into account unique characteristics of each track.
+%
+After the training step, the model will be tested in the a another kind of environment, supported by ROS, in order to achieve a bit more realistic use case.
+%
+In summary, our work lies at the intersection between Reinforcement Learning research for autonomous driving and specific needs of auto racing by training an innovative approach based on PPO and accurate use of waypoints on tracks given the fact that circuits will not change over the time and could be optimized.
+%
+Next section provides detailed methodology, illustrating how we implemented and trained our model to achieve best results on selected circuits.
 
 \section{Metodologia}
 
-\begin{itemize}
-    \item Descrizione dell'architettura del modello utilizzato, inclusi i dettagli su come avete implementato l'algoritmo PPO.
+% \begin{itemize}
+%     \item Descrizione dell'architettura del modello utilizzato, inclusi i dettagli su come avete implementato l'algoritmo PPO.
 
-    \item Spiegazione del processo di raccolta dei dati e la selezione dei circuiti utilizzati per l'addestramento.
+%     \item Spiegazione del processo di raccolta dei dati e la selezione dei circuiti utilizzati per l'addestramento.
 
-    \item Dettagli sui waypoints e su come sono stati integrati nel processo di addestramento.
+%     \item Dettagli sui waypoints e su come sono stati integrati nel processo di addestramento.
 
-\end{itemize}
+% \end{itemize}
 
 La nostra metodologia mira a fornire una visione approfondita dell'architettura del modello, del processo di addestramento e dell'integrazione dei waypoints nei circuiti selezionati. L'obiettivo è presentare un quadro chiaro e riproducibile del nostro approccio alla guida autonoma basata su Reinforcement Learning, con un focus particolare sull'utilizzo dell'algoritmo PPO.
 
