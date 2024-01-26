@@ -7,6 +7,56 @@
 \usepackage{graphicx}
 \usepackage{textcomp}
 \usepackage{xcolor}
+\usepackage{url}
+\usepackage{mathtools}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% Default fixed font does not support bold face
+\DeclareFixedFont{\ttb}{T1}{txtt}{bx}{n}{12} % for bold
+\DeclareFixedFont{\ttm}{T1}{txtt}{m}{n}{12}  % for normal
+
+% Custom colors
+\usepackage{color}
+\definecolor{deepblue}{rgb}{0,0,0.5}
+\definecolor{deepred}{rgb}{0.6,0,0}
+\definecolor{deepgreen}{rgb}{0,0.5,0}
+
+\usepackage{listings}
+
+% Python style for highlighting
+\newcommand\pythonstyle{\lstset{
+language=Python,
+basicstyle=\ttm,
+morekeywords={self},              % Add keywords here
+keywordstyle=\ttb\color{deepblue},
+emph={MyClass,__init__},          % Custom highlighting
+emphstyle=\ttb\color{deepred},    % Custom highlighting style
+stringstyle=\color{deepgreen},
+frame=tb,                         % Any extra options here
+showstringspaces=false
+}}
+
+
+% Python environment
+\lstnewenvironment{python}[1][]
+{
+\pythonstyle
+\lstset{#1}
+}
+{}
+
+% Python for external files
+\newcommand\pythonexternal[2][]{{
+\pythonstyle
+\lstinputlisting[#1]{#2}}}
+
+% Python for inline
+\newcommand\pythoninline[1]{{\pythonstyle\lstinline!#1!}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
@@ -232,10 +282,10 @@ Abbiamo identificato e annotato accuratamente i waypoints su ciascun circuito ut
 %
 Durante l'addestramento, il modello è stato incentivato a seguire i waypoints, fornendo una guida più precisa e adattandosi alle specificità di ciascun circuito.
 
-\subsection{Raccolta e prepoccessing dei dati}
+\subsubsection{Raccolta e prepoccessing dei dati}
 La raccolta dei dati è stata effettuata attraverso simulazioni realistiche, catturando scenari di guida diversificati. I dati sono stati preprocessati per normalizzare le informazioni di input e garantire una distribuzione uniforme delle condizioni di guida, evitando bias durante l'addestramento.
 
-\subsection{Parametri e configurazioni}
+\subsubsection{Parametri e configurazioni}
 Abbiamo attentamente selezionato i parametri dell'algoritmo PPO, tra cui il tasso di apprendimento, il coefficiente di entropia e la dimensione dei minibatch, attraverso sperimentazioni iterative per massimizzare le prestazioni del modello su circuiti specifici.
 
 \medskip
@@ -245,8 +295,77 @@ Questa metodologia integrata ha consentito l'addestramento di un modello di guid
 %
 %
 %
-\subsection{Evaluation}
+\subsection{Model Usage}
 
+During this phase, the reinforcement learning model trained in the first part of the project becomes the operational core of the car, taking decision on what to do.
+%
+The application environment is extent to a more complex scenario, based on ROS.
+
+The project is based on F1tenth Gym Ros project \footnote{\url{https://github.com/f1tenth/f1tenth\_gym\_ros}}, a containerized ROS communication bridge for the environment that allow the use of ROS2 API \cite{Ros2}.
+
+The starting point of building a ros node is defining a class that will declare the communication needs, both sending and receiving messages.
+
+\begin{python}
+class PPOModelEvaluator(Node):
+  def __init__(self):
+    super().__init__('car_node')
+
+    #Topics for Pubs & Subs
+    lidarscan_topic = '/scan'
+    drive_topic = '/drive'
+
+    # Model loading
+    self.model = PPO.load(path)
+
+    # ROS2 Sub & Pub
+    self.lidar_sub =
+      self.create_sub(callback)
+    self.drive_pub =
+      self.create_pub(...)
+\end{python}
+
+After that we can let the control flow spin to handle the specified callback.
+%
+This node is designed to continuously receive data from the lidar scanner over the vehicle and use the model to predict the optimal actions to be taken based on these inputs.
+%
+The input data of the model is a vector of $ 1\times1080 $ linear distances between the actual position of the car and first obstacle the light will find over the ray path.
+%
+It span over an angle of 360 degrees around the car.
+%
+When new data are ready to be processed, the model start the prediction and the output is the action that the car will take.
+%
+In this case we can control the steering angle and the speed of the car.
+
+\begin{equation*}
+\begin{bmatrix}
+    d_1\\
+    d_2\\
+    \dots\\
+    d_{1080}
+\end{bmatrix}
+\xRightarrow[\text{Prediction}]{\text{Model}}
+\begin{pmatrix}
+    \texttt{angle}\\
+    \texttt{velocity}
+\end{pmatrix}
+\end{equation*}
+
+\begin{python}
+def callback(self, data):
+  distances = normalize(data)
+
+  action, _ = self.model.predict(d)
+  action = denormalize(action)
+
+  msg = ...
+  msg.angle = action[0]
+  msg.speed = action[1]
+  self.drive_pub.publish(msg)
+\end{python}
+
+%
+%
+%
 \section{Esperimenti}
 
 \begin{itemize}
