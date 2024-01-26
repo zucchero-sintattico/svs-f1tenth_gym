@@ -2,7 +2,7 @@ import argparse
 import os
 import random
 
-from train import train, run
+from train import train, run, evaluate
 
 
 base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -12,7 +12,8 @@ def get_available_maps():
     dir_content = os.listdir(map_path)
     maps = []
     for item in dir_content:
-        if os.path.isdir(os.path.join(map_path, item)):
+        if os.path.isdir(os.path.join(map_path, item)) and \
+            os.path.exists(os.path.join(map_path, item, item + "_raceline.csv")):
             maps.append(item)
     return maps
 
@@ -44,6 +45,11 @@ if __name__ == '__main__':
     run_parser.add_argument('-m', '--map', type=str, help='Map to train the model on. Default: random maps', default='random')
     run_parser.add_argument('--timesteps', type=float, help='Number of timesteps to train the model. Default: 0.01', default=0.01)
 
+    evaluate_parser = subparser.add_parser('evaluate', help='Evaluate the model')
+    evaluate_parser.add_argument('-m', '--map', type=str, help='Map to train the model on. Default: random maps', default='random')
+    evaluate_parser.add_argument('--timesteps', type=float, help='Number of timesteps to train the model. Default: 0.01', default=0.01)
+    evaluate_parser.add_argument('--n-evaluate', type=int, help='Number of timesteps to train the model. Default: 20', default=20)
+
     args = parser.parse_args()
 
     available_maps = get_available_maps()
@@ -71,7 +77,14 @@ if __name__ == '__main__':
         if args.map == 'random':
             args.map = random.choice(available_maps)
         check_map(args.map)
-        run(args.map, args.timesteps)
+        run(args.map, args.timesteps, args.n_eval_episodes)
+        exit(0)
+    elif args.command == 'evaluate':
+        print("Evaluating the model")
+        if args.map == 'random':
+            args.map = random.choice(available_maps)
+        check_map(args.map)
+        evaluate(args.map == 'random', args.map, args.timesteps, args.n_evaluate)
         exit(0)
     else:
         print("Invalid command")
