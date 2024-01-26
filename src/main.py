@@ -39,6 +39,7 @@ if __name__ == '__main__':
     train_parser.add_argument('--min-learning-rate', type=float, help='Learning rate for the model. Default: 0.0005', default=0.0005)
     train_parser.add_argument('--max-learning-rate', type=float, help='Learning rate for the model. Default: 0.0001', default=0.0001)
     train_parser.add_argument('--num-of-steps', type=int, help='Number of steps to train the model. Default: 10', default=10)
+    train_parser.add_argument('--num-of-sub-steps', type=int, help='Number of steps for each traing cicle. Default: 10', default=10)
     train_parser.add_argument('--optimize-speed', action='store_true', help='Save the model to the specified path. Default: None')
 
     run_parser = subparser.add_parser('run', help='Run the model in the simulator')
@@ -70,6 +71,7 @@ if __name__ == '__main__':
                 args.min_learning_rate,
                 args.max_learning_rate,
                 args.num_of_steps,
+                args.num_of_sub_steps,
                 args.optimize_speed)
         exit(0)
     elif args.command == 'run':

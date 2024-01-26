@@ -18,6 +18,7 @@ def train(
         min_learning_rate: float,
         max_learning_rate: float,
         num_of_steps: int,
+        substeps: int,
         optimize_speed: bool) -> None:
 
     tensorboard_path = './train_test/'
@@ -67,7 +68,7 @@ def train(
                 model.save("./src/base_model")   
 
         eval_callback = EvalCallback(eval_env, best_model_save_path='./train_test/',
-                                    log_path='./train_test/', eval_freq= int(timesteps/20),
+                                    log_path='./train_test/', eval_freq= int(timesteps/substeps),
                                     deterministic=True, render=False)
 
         model.learn(total_timesteps=timesteps, progress_bar=True, callback=eval_callback)
