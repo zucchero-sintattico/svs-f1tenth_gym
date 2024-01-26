@@ -29,7 +29,7 @@ SPEED_SCALE = 0.7
 class PPOModelEvaluator(Node):
 
     def __init__(self):
-        super().__init__('wall_follow_node')
+        super().__init__('car_node')
 
         #Topics & Subs, Pubs
         lidarscan_topic = '/scan'
