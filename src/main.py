@@ -1,6 +1,7 @@
 import argparse
 import os
 import random
+import sys
 
 from train import train, run
 
@@ -20,7 +21,7 @@ def check_map(map_name):
     if map_name not in get_available_maps():
         print(f"Map '{map_name}' not found. Available maps:")
         print(get_available_maps())
-        exit(1)
+        sys.exit(1)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -51,7 +52,7 @@ if __name__ == '__main__':
     if args.list:
         print("Available maps:")
         print(get_available_maps())
-        exit(0)
+        sys.exit(0)
     elif args.command == 'train':
         print("Training the model")
         if 'random' not in args.map:
@@ -65,14 +66,14 @@ if __name__ == '__main__':
                 args.max_learning_rate,
                 args.num_of_steps,
                 args.optimize_speed)
-        exit(0)
+        sys.exit(0)
     elif args.command == 'run':
         print("Running the model")
         if args.map == 'random':
             args.map = random.choice(available_maps)
         check_map(args.map)
         run(args.map, args.timesteps)
-        exit(0)
+        sys.exit(0)
     else:
         print("Invalid command")
-        exit(1)
+        sys.exit(1)
