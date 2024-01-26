@@ -1,6 +1,5 @@
 import gym
 import numpy as np
-#from gym import spaces
 from gym import spaces
 from pathlib import Path
 from argparse import Namespace
@@ -157,11 +156,6 @@ class F110_Wrapped(gym.Wrapper):
             np.power((observation["poses_y"][0] - self.last_position['y']), 2)
                                             )
 
-        # if distance_from_last_position > 0.0005:
-        #     reward += 0.8
-        # else:
-        #     reward = 0
-        # # Update the last position
         reward += distance_from_last_position
 
         self.last_position['x'] = observation['poses_x'][0]
@@ -228,8 +222,6 @@ class F110_Wrapped(gym.Wrapper):
         self.race_line_y = race_line_y
         self.race_line_theta = race_line_theta
 
-        # else:
-        #     x, y, t = self.start_position()
 
         self.episode_returns = []
 
@@ -243,9 +235,6 @@ class F110_Wrapped(gym.Wrapper):
         self.env.map_name = map_name
         self.env.map_ext = map_extension
         self.env.update_map(f"{map_name}.yaml", map_extension)
-        # if update_render and self.env.renderer:
-        #     self.env.renderer.close()
-        #     self.env.renderer = None
 
     def seed(self, seed):
         self.current_seed = seed
