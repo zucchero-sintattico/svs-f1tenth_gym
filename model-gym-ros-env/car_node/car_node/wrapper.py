@@ -102,8 +102,7 @@ class F110_Wrapped(gym.Wrapper):
             x, y, t = map_utility.get_start_position(self.map_path)
             self.set_raceliens()
             return x, y, t
-        else:
-            raise Exception("Map path not set")
+        raise Exception("Map path not set")
 
 
 
