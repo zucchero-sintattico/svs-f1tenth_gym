@@ -32,7 +32,7 @@ def train(
     eval_env.set_map_path(path)
     eval_env.seed(1773449316)
     eval_env.set_optimize_speed(optimize_speed)
-    
+
 
     timesteps_list = np.logspace(np.log10(min_timesteps), np.log10(max_timesteps), num=num_of_steps, endpoint=True, base=10.0, dtype=int, axis=0)
     learning_rate_list = np.logspace(np.log10(max_learning_rate), np.log10(min_learning_rate), num=num_of_steps, endpoint=True, base=10.0, dtype=None, axis=0)
@@ -43,7 +43,7 @@ def train(
     for timesteps, learning_rate in zip(timesteps_list, learning_rate_list):
 
         eval_env.seed(round(np.random.rand()*1000000000))
-        
+
         if os.path.exists("./train_test/best_global_model.zip"):
             print("Loading Existing Model")
             model = PPO.load("./train_test/best_global_model", eval_env, learning_rate=linear_schedule(learning_rate), device=device)
