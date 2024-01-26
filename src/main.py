@@ -81,10 +81,13 @@ if __name__ == '__main__':
         exit(0)
     elif args.command == 'evaluate':
         print("Evaluating the model")
-        if args.map == 'random':
-            args.map = random.choice(available_maps)
-        check_map(args.map)
-        evaluate(args.map == 'random', args.map, args.timesteps, args.n_evaluate)
+        if 'random' not in args.map:
+            check_map(args.map)
+        evaluate(
+            args.map == 'random',
+            random.choice(available_maps) if args.map == 'random' else args.map,
+            args.timesteps,
+            args.n_evaluate)
         exit(0)
     else:
         print("Invalid command")
