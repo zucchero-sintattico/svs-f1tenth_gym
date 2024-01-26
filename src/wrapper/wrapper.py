@@ -14,7 +14,7 @@ def logger(map, event, reword, lap_time):
     with open('log.csv', 'a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow([map, event, reword, lap_time])
-        
+
 
 def convert_range(value, input_range, output_range):
     # converts value(s) from range to another range
@@ -62,7 +62,7 @@ class F110_Wrapped(gym.Wrapper):
 
         # set threshold for maximum angle of car, to prevent spinning
         self.max_theta = 100
-        
+
 
         self.map_path = None
         self.random_map = random_map
@@ -121,11 +121,11 @@ class F110_Wrapped(gym.Wrapper):
 
 
     def step(self, action):
-        
+
         def episode_end(reason = None, rew = 0):
             if reason is not None:
                 print("Episode End ->", reason, self.map_path)
-                
+
             done = True
             self.count = 0
             self.episode_returns = []
@@ -148,8 +148,8 @@ class F110_Wrapped(gym.Wrapper):
                                         ('c3B/stream', self.race_line_color))
 
         reward = 0
-        
-        
+
+
         aceleration_reward = action_convert[1]
 
         if self.optimize_speed:
@@ -159,11 +159,11 @@ class F110_Wrapped(gym.Wrapper):
                 reward += 2
 
         reward = reward * 0.01
-    
-        
+
+
         if self.count < len(self.race_line_x) - 1:
             X, Y = observation['poses_x'][0], observation['poses_y'][0]
-        
+
             dist = np.sqrt(np.power((X - next_x), 2) + np.power((Y - next_y), 2))
             if dist < 2:
                 self.count = self.count + 1
@@ -172,15 +172,15 @@ class F110_Wrapped(gym.Wrapper):
 
             if dist < 2.5:
                 self.number_of_base_reward_give += 1
-                
+
                 if self.number_of_base_reward_give < 100:
                     reward += 0.05 
                 else:
                     reward -= 1
-                        
+
             if dist > 3: 
                 reward -= 1
-                
+
 
         else:  
             steps_goal = self.count       
@@ -188,15 +188,15 @@ class F110_Wrapped(gym.Wrapper):
                 steps_done = self.step_for_episode          
             elif self.one_lap_done:
                 steps_done = self.step_for_episode / 2   
-                
+
             k = (steps_done - steps_goal)/steps_goal
-            
+
             reward += (1-k) * 100 
 
             print("----------------- Lap Done ----------------->", self.map_path, self.step_for_episode * 0.01, reward)
-            
+
             self.count = 0
-            
+
             if self.one_lap_done:
                 logger(self.map_path, "lap_done", sum(self.episode_returns), self.step_for_episode * 0.01)
                 self.episode_returns = []
@@ -204,22 +204,22 @@ class F110_Wrapped(gym.Wrapper):
                 self.one_lap_done = False
             else:
                 self.one_lap_done = True
-            
-        
+
+
         reward = round(reward, 6)
-        
+
 
 
         if observation['collisions'][0]:
             logger(self.map_path, "collisions", sum(self.episode_returns), self.step_for_episode * 0.01)
             done, reward = episode_end(rew = -30)
-            
-            
+
+
 
         if self.step_for_episode > 50_000:
             logger(self.map_path, "too_slow", sum(self.episode_returns), self.step_for_episode * 0.01)
             done, reward = episode_end("Too long", -10)
-            
+
         self.episode_returns.append(reward)
         self.step_for_episode += 1
 
@@ -250,7 +250,7 @@ class F110_Wrapped(gym.Wrapper):
         race_line_x = race_line_x[random_index:] + race_line_x[:random_index]
         race_line_y = race_line_y[random_index:] + race_line_y[:random_index]
         race_line_theta = race_line_theta[random_index:] + race_line_theta[:random_index]
-        
+
 
         self.race_line_x = race_line_x
         self.race_line_y = race_line_y
@@ -290,4 +290,4 @@ class F110_Wrapped(gym.Wrapper):
     def normalise_observations(self, observations):
         # convert observations from normal lidar distances range to range [-1, 1]
         return convert_range(observations, [self.lidar_min, self.lidar_max], [-1, 1])
-    
+

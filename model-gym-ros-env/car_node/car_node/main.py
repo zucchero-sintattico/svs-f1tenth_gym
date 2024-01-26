@@ -27,10 +27,10 @@ STEER_SCALE = 0.5
 SPEED_SCALE = 0.7
 
 class PPOModelEvaluator(Node):
-    
+
     def __init__(self):
         super().__init__('wall_follow_node')
-        
+
         #Topics & Subs, Pubs
         lidarscan_topic = '/scan'
         drive_topic = '/drive'
@@ -49,12 +49,12 @@ class PPOModelEvaluator(Node):
     def lidar_callback(self, data):
         d = np.array(data.ranges, dtype=np.float64)
         d = convert_range(d, [data.angle_min, data.angle_max], [-1, 1])
-        
+
         action, _states = self.model.predict(d, deterministic=True)
         action = self.eval_env.un_normalise_actions(action)
-        
+
         self.get_logger().info(f'{action[0], action[1]}')
-        
+
         drive_msg = AckermannDriveStamped()
         drive_msg.header.stamp = self.get_clock().now().to_msg()
         drive_msg.header.frame_id = "laser"

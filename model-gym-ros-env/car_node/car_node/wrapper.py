@@ -71,7 +71,7 @@ class F110_Wrapped(gym.Wrapper):
 
     def get_total_steps(self) -> int:
         return self.step_count
-    
+
     def get_episode_rewards(self) -> List[float]:
         """
         Returns the rewards of all the episodes
@@ -81,7 +81,7 @@ class F110_Wrapped(gym.Wrapper):
         return self.episode_returns
 
 
-  
+
 
 
     def set_raceliens(self):
@@ -128,13 +128,13 @@ class F110_Wrapped(gym.Wrapper):
                                         ('c3B/stream', self.race_line_color))
 
         reward = 0
- 
-            
 
-        
+
+
+
         if self.count < len(self.race_line_x) - 1:
             X, Y = observation['poses_x'][0], observation['poses_y'][0]
-        
+
             dist = np.sqrt(np.power((X - next_x), 2) + np.power((Y - next_y), 2))
             if dist < 2:
                 self.count = self.count + 1
@@ -156,7 +156,7 @@ class F110_Wrapped(gym.Wrapper):
             + 
             np.power((observation["poses_y"][0] - self.last_position['y']), 2)
                                             )
-        
+
         # if distance_from_last_position > 0.0005:
         #     reward += 0.8
         # else:
@@ -194,7 +194,7 @@ class F110_Wrapped(gym.Wrapper):
 
         self.episode_returns.append(reward)
 
-        
+
 
 
         return self.normalise_observations(observation['scans'][0]), reward, bool(done), info
@@ -222,7 +222,7 @@ class F110_Wrapped(gym.Wrapper):
         race_line_x = race_line_x[random_index:] + race_line_x[:random_index]
         race_line_y = race_line_y[random_index:] + race_line_y[:random_index]
         race_line_theta = race_line_theta[random_index:] + race_line_theta[:random_index]
-        
+
 
         self.race_line_x = race_line_x
         self.race_line_y = race_line_y
@@ -261,4 +261,4 @@ class F110_Wrapped(gym.Wrapper):
     def normalise_observations(self, observations):
         # convert observations from normal lidar distances range to range [-1, 1]
         return convert_range(observations, [self.lidar_min, self.lidar_max], [-1, 1])
-    
+
