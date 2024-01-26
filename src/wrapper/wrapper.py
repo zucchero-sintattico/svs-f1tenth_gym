@@ -1,13 +1,9 @@
 import gym
 import numpy as np
-#from gym import spaces
 from gym import spaces
-from pathlib import Path
-import yaml
-from argparse import Namespace
 from pyglet.gl import GL_POINTS
 import utility.map_utility as map_utility
-from typing import Any, Dict, List, Optional, SupportsFloat, Tuple, Union
+from typing import List
 import csv
 
 def logger(map, event, reword, lap_time):
@@ -18,6 +14,7 @@ def logger(map, event, reword, lap_time):
     with open('log.csv', 'a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow([map, event, reword, lap_time])
+        
 
 def convert_range(value, input_range, output_range):
     # converts value(s) from range to another range
@@ -59,10 +56,12 @@ class F110_Wrapped(gym.Wrapper):
         self.start_radius = (self.track_width / 2) - ((self.car_length + self.car_width) / 2)  # just extra wiggle room
 
         self.step_count = 0
+        self.count = 0
+        self.step_for_episode = 0
 
         # set threshold for maximum angle of car, to prevent spinning
         self.max_theta = 100
-        self.count = 0
+        
 
         self.map_path = None
         self.random_map = random_map
@@ -73,13 +72,9 @@ class F110_Wrapped(gym.Wrapper):
         self.race_line_theta = []
 
         self.episode_returns = []
-
         self.is_rendering = False
-
         self.last_position = {'x': None, 'y': None}
-        
         self.number_of_base_reward_give = 10
-        
         self.one_lap_done = False
 
     def get_total_steps(self) -> int:
@@ -134,6 +129,7 @@ class F110_Wrapped(gym.Wrapper):
             done = True
             self.count = 0
             self.episode_returns = []
+            self.step_for_episode = 0
             self.one_lap_done = False
             return done, rew
 
@@ -189,21 +185,22 @@ class F110_Wrapped(gym.Wrapper):
         else:  
             steps_goal = self.count       
             if  not self.one_lap_done:
-                steps_done = len(self.episode_returns)            
+                steps_done = self.step_for_episode          
             elif self.one_lap_done:
-                steps_done = len(self.episode_returns) / 2   
+                steps_done = self.step_for_episode / 2   
                 
             k = (steps_done - steps_goal)/steps_goal
             
             reward += (1-k) * 100 
 
-            print("----------------- Lap Done ----------------->", self.map_path, len(self.episode_returns) * 0.01, reward)
+            print("----------------- Lap Done ----------------->", self.map_path, self.step_for_episode * 0.01, reward)
             
             self.count = 0
             
             if self.one_lap_done:
-                logger(self.map_path, "lap_done", sum(self.episode_returns), len(self.episode_returns) * 0.01)
+                logger(self.map_path, "lap_done", sum(self.episode_returns), self.step_for_episode * 0.01)
                 self.episode_returns = []
+                self.step_for_episode = 0
                 self.one_lap_done = False
             else:
                 self.one_lap_done = True
@@ -214,16 +211,17 @@ class F110_Wrapped(gym.Wrapper):
 
 
         if observation['collisions'][0]:
-            logger(self.map_path, "collisions", sum(self.episode_returns), len(self.episode_returns) * 0.01)
+            logger(self.map_path, "collisions", sum(self.episode_returns), self.step_for_episode * 0.01)
             done, reward = episode_end(rew = -30)
             
             
 
-        if len(self.episode_returns) > 50_000:
-            logger(self.map_path, "too_slow", sum(self.episode_returns), len(self.episode_returns) * 0.01)
+        if self.step_for_episode > 50_000:
+            logger(self.map_path, "too_slow", sum(self.episode_returns), self.step_for_episode * 0.01)
             done, reward = episode_end("Too long", -10)
             
         self.episode_returns.append(reward)
+        self.step_for_episode += 1
 
 
         return self.normalise_observations(observation['scans'][0]), reward, bool(done), info
@@ -262,6 +260,7 @@ class F110_Wrapped(gym.Wrapper):
         #     x, y, t = self.start_position()
 
         self.episode_returns = []
+        self.step_for_episode = 0
 
         self.last_position = {'x': x, 'y': y}
 

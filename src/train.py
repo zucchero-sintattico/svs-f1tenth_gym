@@ -32,6 +32,7 @@ def train(
     eval_env.set_map_path(path)
     eval_env.seed(1773449316)
     eval_env.set_optimize_speed(optimize_speed)
+    
 
     timesteps_list = np.logspace(np.log10(min_timesteps), np.log10(max_timesteps), num=num_of_steps, endpoint=True, base=10.0, dtype=int, axis=0)
     learning_rate_list = np.logspace(np.log10(max_learning_rate), np.log10(min_learning_rate), num=num_of_steps, endpoint=True, base=10.0, dtype=None, axis=0)
