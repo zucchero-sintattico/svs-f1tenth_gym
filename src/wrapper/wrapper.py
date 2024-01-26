@@ -32,6 +32,7 @@ class F110_Wrapped(gym.Wrapper):
 
     def __init__(self, env, random_map=False):
         super().__init__(env)
+        self.optimize_speed = False
 
         # normalised action space, steer and speed
         self.action_space = spaces.Box(low=np.array([-1.0, -1.0]), high=np.array([1.0, 1.0]), dtype=np.float)
