@@ -115,12 +115,31 @@ def evaluate(random_map: bool, map: str, timestep: int, n_evaluate: int) -> None
     print(std_reward)
 
 def run(map: str, timestep: float) -> None:
+    
+    
+    def render_callback(env_renderer):
+        # custom extra drawing function
+
+        e = env_renderer
+
+        # update camera to follow car
+        x = e.cars[0].vertices[::2]
+        y = e.cars[0].vertices[1::2]
+        top, bottom, left, right = max(y), min(y), min(x), max(x)
+        e.score_label.x = left
+        e.score_label.y = top - 700
+        e.left = left - 800
+        e.right = right + 800
+        e.top = top + 800
+        e.bottom = bottom - 800
+
 
     device = 'cpu'
     path = get_map(map)
     map_path = get_formatted_map(path)
 
     eval_env  = gym.make('f110_gym:f110-v0', map=map_path, map_ext=map_ext, num_agents=1, timestep=timestep, integrator=Integrator.RK4)
+    eval_env.add_render_callback(render_callback)
     eval_env = F110_Wrapped(eval_env, random_map=False)
     eval_env.set_map_path(path)
 
