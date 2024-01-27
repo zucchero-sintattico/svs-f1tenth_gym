@@ -18,6 +18,7 @@ def train(
         min_learning_rate: float,
         max_learning_rate: float,
         num_of_steps: int,
+        substeps: int,
         optimize_speed: bool) -> None:
 
     tensorboard_path = './train_test/'
@@ -28,7 +29,7 @@ def train(
     path = get_map(map)
     map_path = get_formatted_map(path)
     eval_env  = gym.make('f110_gym:f110-v0', map=map_path, map_ext=map_ext, num_agents=1, timestep=timestep, integrator=Integrator.RK4)
-    eval_env = F110_Wrapped(eval_env, random_map=True)
+    eval_env = F110_Wrapped(eval_env, random_map=random_map)
     eval_env.set_map_path(path)
     eval_env.seed(1773449316)
     eval_env.set_optimize_speed(optimize_speed)
@@ -67,7 +68,7 @@ def train(
                 model.save("./src/base_model")   
 
         eval_callback = EvalCallback(eval_env, best_model_save_path='./train_test/',
-                                    log_path='./train_test/', eval_freq= int(timesteps/20),
+                                    log_path='./train_test/', eval_freq= int(timesteps/substeps),
                                     deterministic=True, render=False)
 
         model.learn(total_timesteps=timesteps, progress_bar=True, callback=eval_callback)
@@ -94,6 +95,24 @@ def train(
 
         del model
 
+def evaluate(random_map: bool, map: str, timestep: int, n_evaluate: int) -> None:
+    device = 'cpu'
+
+    if random_map:
+        map = "BrandsHatch"
+    path = get_map(map)
+    map_path = get_formatted_map(path)
+
+    eval_env  = gym.make('f110_gym:f110-v0', map=map_path, map_ext=map_ext, num_agents=1, timestep=timestep, integrator=Integrator.RK4)
+    eval_env = F110_Wrapped(eval_env, random_map=random_map)
+    eval_env.set_map_path(path)
+
+    model = PPO.load("./train_test/best_global_model", eval_env, device=device)
+
+    mean_reward, std_reward = evaluate_policy(model, model.get_env(), n_eval_episodes=n_evaluate)
+
+    print(mean_reward)
+    print(std_reward)
 
 def run(map: str, timestep: float) -> None:
 
