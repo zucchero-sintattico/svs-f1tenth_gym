@@ -79,7 +79,7 @@ if __name__ == '__main__':
         if args.map == 'random':
             args.map = random.choice(available_maps)
         check_map(args.map)
-        run(args.map, args.timesteps, args.n_eval_episodes)
+        run(args.map, args.timesteps)
         exit(0)
     elif args.command == 'evaluate':
         print("Evaluating the model")
