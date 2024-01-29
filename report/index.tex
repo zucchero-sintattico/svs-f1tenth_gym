@@ -8,6 +8,7 @@
 \usepackage{textcomp}
 \usepackage{xcolor}
 \usepackage{url}
+\usepackage{hyperref}
 \usepackage{mathtools}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -250,7 +251,11 @@ Next section provides detailed methodology, illustrating how we implemented and 
 
 % \end{itemize}
 
-The project is aimed at providing a two-part integrated architecture. The first part employs use of the Simulator Gym (F1tenthGym) \cite{F1tenthGym} for the training process of a reinforcement learning model based on PPO \cite{PPOOpenAI} and using waypoints in the circuits.
+The project is aimed at providing a two-part integrated architecture. The first part employs use of the Simulator Gym (F1tenthGym) \cite{F1tenthGym}, based on OpenAI Gym \cite{OpenAIGym}, is a toolkit for reinforcement learning.
+%
+Then, the model is based on PPO \cite{PPOOpenAI}, a policy gradient methods for reinforcement learning, which alternate between sampling data through interaction with the environment, and optimizing a "surrogate" objective function using stochastic gradient ascent.
+%
+Afterwards, the model is trained using a waypoint-follow approach, in order to complete the circuits.
 
 The second part uses the previously trained model to predict actions that need to be taken by a car inside the ros based simulator employing sensor feedback.
 
@@ -261,36 +266,106 @@ Through a containerized environment, we aim at giving you an insight into our ap
 %
 \subsection{Model Training}
 
-\begin{figure}
+% \begin{figure}
+%     \centering
+%     \includegraphics[width=0.485\textwidth]{img/ppo.jpg}
+%     \caption{PPO Algorithm. https://medium.com/@oleglatypov/a-comprehensive-guide-to-proximal-policy-optimization-ppo-in-ai-82edab5db200}
+%     \label{fig:ppo}
+% \end{figure}
+
+% \subsubsection{Architettura del modello}
+% Il cuore del nostro sistema è una rete neurale profonda addestrata attraverso l'algoritmo PPO. La rete neurale accetta input relativi allo stato attuale del veicolo, quali posizione, velocità, angolo di sterzata e dati sensoriali provenienti da telecamere e sensori a ultrasuoni. Il modello produce un'azione di controllo, rappresentata da una distribuzione di probabilità su possibili comandi, consentendo una gestione dinamica e continua del veicolo.
+
+% \subsubsection{Addestramento del modello}
+% Abbiamo utilizzato una vasta raccolta di dati provenienti da simulazioni di guida su diversi circuiti. Ogni episodio di addestramento ha coinvolto il modello che interagisce con l'ambiente simulato, ricevendo ricompense basate su metriche di prestazione come tempi di percorrenza, traiettorie seguite e reazioni a condizioni impreviste come curve strette o variazioni di superficie stradale. L'addestramento è stato eseguito per numerosi cicli, garantendo la convergenza del modello verso strategie ottimali di guida.
+
+% \subsubsection{Integrazione dei waypoints}
+
+% Un aspetto distintivo della nostra metodologia è l'integrazione dei waypoints dei circuiti nelle mappe di addestramento.
+% %
+% Abbiamo identificato e annotato accuratamente i waypoints su ciascun circuito utilizzato, indicando punti chiave sulla traiettoria ottimale.
+% %
+% Durante l'addestramento, il modello è stato incentivato a seguire i waypoints, fornendo una guida più precisa e adattandosi alle specificità di ciascun circuito.
+
+% \subsubsection{Raccolta e prepoccessing dei dati}
+% La raccolta dei dati è stata effettuata attraverso simulazioni realistiche, catturando scenari di guida diversificati. Dopodiché sono stati normalizzati per garantire una distribuzione uniforme delle condizioni di guida, evitando bias durante l'addestramento.
+
+% \subsubsection{Parametri e configurazioni}
+% Abbiamo attenziosamente scelto i parametri dell'algoritmo PPO, tra cui il tasso di apprendimento e gli intervalli di train. Per questa ragione sono state utilizzate diverse modalità di valutazione del modello in modo tale da scegliere quella migliore.
+
+% \medskip
+
+%Questa metodologia integrata ha consentito l'addestramento di un modello di guida autonoma altamente adattivo, capace di gestire in modo dinamico i circuiti di gara e di ottimizzare le prestazioni in risposta a variazioni ambientali e specificità della pista. Nella sezione successiva, presenteremo i risultati dei nostri esperimenti, evidenziando le capacità e le limitazioni del nostro approccio.
+
+% TODO: spiegazione funzionamento modello
+
+%
+%
+%
+\subsubsection{Reward}
+The provided code implements a reward assignment system for an autonomous driving agent in a simulation environment.
+%
+The main components of the system are as follows:
+
+\begin{itemize}
+    \item \textbf{Acceleration Reward:}
+    The reward depends on the agent's acceleration action.
+    %
+    If the acceleration exceeds 2, the reward increases accordingly; otherwise, a fixed reward of 0.02 is added.
+
+    \item \textbf{Reward for Proximity to the Race Line Point:}
+    The reward depends on the distance between the agent's position and the next point on the race line.
+    %
+    A small reward is added if the distance is less than 2.
+    %
+    If the distance is less than 2.5, a growing reward is added within the first 100 steps, followed by a decreasing penalty.
+
+    \item \textbf{Penalty for Deviation from the Race Line Point:}
+    A penalty is subtracted if the distance from the next point on the race line exceeds 3.
+
+    \item \textbf{Reward for Lap Completion:}
+    A reward proportional to the deviation from the goal is added upon completing each lap.
+
+    \item \textbf{Collision and Time Limit Handling:}
+    A significant penalty is handled in case of collision.
+    %
+    If the number of steps exceeds a limit, an end-of-episode event is handled with a penalty.
+
+\end{itemize}
+
+The acceleration reward and lap completion reward are assigned only when the model has matured enough to complete multiple laps without collisions; otherwise, it tends to converge to a solution where the speed increases constantly, without finish any lap.
+
+%
+%
+%
+\subsubsection{General model}
+The model was trained on 18 different tracks, which were randomly selected with a randomized spawn of the car on the track. As a result, it completes eight tracks with a success rate of 100\%, never completes six tracks, and occasionally completes the remaining five tracks, with variations in success and failure.
+\begin{figure}[h]
     \centering
-    \includegraphics[width=0.485\textwidth]{img/ppo.jpg}
-    \caption{PPO Algorithm. https://medium.com/@oleglatypov/a-comprehensive-guide-to-proximal-policy-optimization-ppo-in-ai-82edab5db200}
-    \label{fig:ppo}
+    \includegraphics[width=0.485\textwidth]{img/GeneralModel.png}
+    \caption{General model, trained using all the map at the same time}
+    \label{fig:general_train}
 \end{figure}
 
-\subsubsection{Architettura del modello}
-Il cuore del nostro sistema è una rete neurale profonda addestrata attraverso l'algoritmo PPO. La rete neurale accetta input relativi allo stato attuale del veicolo, quali posizione, velocità, angolo di sterzata e dati sensoriali provenienti da telecamere e sensori a ultrasuoni. Il modello produce un'azione di controllo, rappresentata da una distribuzione di probabilità su possibili comandi, consentendo una gestione dinamica e continua del veicolo.
-
-\subsubsection{Addestramento del modello}
-Abbiamo utilizzato una vasta raccolta di dati provenienti da simulazioni di guida su diversi circuiti. Ogni episodio di addestramento ha coinvolto il modello che interagisce con l'ambiente simulato, ricevendo ricompense basate su metriche di prestazione come tempi di percorrenza, traiettorie seguite e reazioni a condizioni impreviste come curve strette o variazioni di superficie stradale. L'addestramento è stato eseguito per numerosi cicli, garantendo la convergenza del modello verso strategie ottimali di guida.
-
-\subsubsection{Integrazione dei waypoints}
-
-Un aspetto distintivo della nostra metodologia è l'integrazione dei waypoints dei circuiti nelle mappe di addestramento.
 %
-Abbiamo identificato e annotato accuratamente i waypoints su ciascun circuito utilizzato, indicando punti chiave sulla traiettoria ottimale.
 %
-Durante l'addestramento, il modello è stato incentivato a seguire i waypoints, fornendo una guida più precisa e adattandosi alle specificità di ciascun circuito.
+%
+\subsubsection{General Model + YasMarina Model}
+At this point, a track that the model consistently failed to complete, specifically YasMarina, was selected. A training cycle was then conducted on this track with the speed optimization active. The resulting model not only mastered YasMarina perfectly, achieving a significant improvement in lap time, but also exhibited positive transfer effects on other tracks. This led to an overall enhancement in the model's performance, indicating that it did not overfit the YasMarina track but instead generalized the knowledge gained from YasMarina to improve its performance on other tracks.
 
-\subsubsection{Raccolta e prepoccessing dei dati}
-La raccolta dei dati è stata effettuata attraverso simulazioni realistiche, catturando scenari di guida diversificati. I dati sono stati preprocessati per normalizzare le informazioni di input e garantire una distribuzione uniforme delle condizioni di guida, evitando bias durante l'addestramento.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.485\textwidth]{img/General + YasMarina Model.png}
+    \caption{General model + YasMarina trained model}
+    \label{fig:YasMarina_train}
+\end{figure}
 
-\subsubsection{Parametri e configurazioni}
-Abbiamo attentamente selezionato i parametri dell'algoritmo PPO, tra cui il tasso di apprendimento, il coefficiente di entropia e la dimensione dei minibatch, attraverso sperimentazioni iterative per massimizzare le prestazioni del modello su circuiti specifici.
-
-\medskip
-
-Questa metodologia integrata ha consentito l'addestramento di un modello di guida autonoma altamente adattivo, capace di gestire in modo dinamico i circuiti di gara e di ottimizzare le prestazioni in risposta a variazioni ambientali e specificità della pista. Nella sezione successiva, presenteremo i risultati dei nostri esperimenti, evidenziando le capacità e le limitazioni del nostro approccio.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.485\textwidth]{img/Speed Optimization YasMarina.png}
+    \caption{YasMarina  Speed Optimizazion}
+    \label{fig:YasMarina_Speed_primization}
+\end{figure}
 
 %
 %
@@ -317,7 +392,7 @@ class PPOModelEvaluator(Node):
     # Model loading
     self.model = PPO.load(path)
 
-    # ROS2 Sub & Pub
+    # ROS
     self.lidar_sub =
       self.create_sub(callback)
     self.drive_pub =
@@ -350,6 +425,8 @@ In this case we can control the steering angle and the speed of the car.
 \end{pmatrix}
 \end{equation*}
 
+\medskip
+
 \begin{python}
 def callback(self, data):
   distances = normalize(data)
@@ -366,17 +443,111 @@ def callback(self, data):
 %
 %
 %
-\section{Esperimenti}
+\subsubsection*{Docker \& multiplatform}
+
+% TODO
+
+%
+%
+%
+\section{Usage}
+
+% \begin{itemize}
+%     \item Descrizione delle condizioni sperimentali, tra cui la configurazione dell'addestramento, la scelta dei parametri, ecc.
+
+%     \item Presentazione dei risultati ottenuti durante i vostri esperimenti.
+
+%     \item Analisi dei risultati, comprese le prestazioni del modello su diversi circuiti.
+
+% \end{itemize}
+
+%
+%
+%
+\subsection{Installation}
+
+You can find everything about the project at the following link: \url{https://github.com/zucchero-sintattico/svs-f1tenth_gym}.
+
+\begin{enumerate}
+    \item Requirements: python 3.8, docker.
+
+    \item \emph{(Optional)} | Create a python environment.
+
+    \item Install the dependencies:
+\begin{verbatim}
+$ (svs-f1tenth_gym/) pip install -e .
+\end{verbatim}
+\end{enumerate}
+
+%
+%
+%
+\subsection{Model training API}
+
+The model training API that use F1tenth Gym environment has a CLI in order to:
 
 \begin{itemize}
-    \item Descrizione delle condizioni sperimentali, tra cui la configurazione dell'addestramento, la scelta dei parametri, ecc.
+    \item Train the model
+\begin{verbatim}
+$ python src/main.py train
+\end{verbatim}
 
-    \item Presentazione dei risultati ottenuti durante i vostri esperimenti.
+    \item Run the trained model
+\begin{verbatim}
+$ python src/main.py run
+\end{verbatim}
 
-    \item Analisi dei risultati, comprese le prestazioni del modello su diversi circuiti.
-
+    \item Evaluate the model
+\begin{verbatim}
+$ python src/main.py evaluate
+\end{verbatim}
 \end{itemize}
 
+For specific parameters for each program, you can use the CLI documentation:
+\begin{verbatim}
+$ python src/main.py --help
+\end{verbatim}
+
+%
+%
+%
+\subsection{Model ROS usage API}
+
+\begin{enumerate}
+    \item (Optional) build the image from Dockerfile (modify the docker-compose file accordingly.):
+\begin{verbatim}
+$ docker build -f Dockerfile-gym-ros .
+\end{verbatim}
+
+    \item Run the docker compose file:
+\begin{verbatim}
+$ docker compose \
+  -f docker-compose-ros-env.yml up
+\end{verbatim}
+
+    \item Attach to the ROS2 running container:
+\begin{verbatim}
+$ docker exec \
+  -it svs-f1tenth_gym-sim-1 /bin/bash
+\end{verbatim}
+
+    \item Attach to the ROS2 running container and run the simulator:
+\begin{verbatim}
+$ ros2 launch f1tenth_gym_ros \
+  gym_bridge_launch.py
+\end{verbatim}
+
+    \item Open \url{http://localhost:8080/vnc.html}.
+
+    \item Run the node for autonomous driving the car:
+\begin{verbatim}
+$ ros2 run car_node car
+\end{verbatim}
+\end{enumerate}
+
+%
+%
+%
 \section{Discussione}
 
 \begin{itemize}
@@ -388,6 +559,8 @@ def callback(self, data):
 
 \end{itemize}
 
+% TODO
+
 \section{Conclusioni}
 
 \begin{itemize}
@@ -396,6 +569,8 @@ def callback(self, data):
     \item Sottolineare l'importanza del vostro contributo e le potenziali implicazioni nella guida autonoma.
 
 \end{itemize}
+
+% TODO
 
 \bibliographystyle{IEEEtran}
 \bibliography{bibliography}
