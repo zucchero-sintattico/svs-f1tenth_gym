@@ -76,6 +76,7 @@ RUN echo "source /opt/ros/foxy/setup.bash" >> ~/.bashrc && \
 COPY model-gym-ros-env/car_node/setup.py /sim_ws/src/car_node/setup.py
 COPY model-gym-ros-env/car_node/car_node/main.py model-gym-ros-env/car_node/car_node/wrapper.py model-gym-ros-env/car_node/car_node/map_utility.py model-gym-ros-env/car_node/car_node/setup.py /sim_ws/src/car_node/car_node/
 COPY train_test /sim_ws/src/car_node/car_node/train_test
+COPY models/* /sim_ws/src/car_node/car_node/models/
 
 RUN pip install -e /sim_ws/src/car_node/car_node && \
     # pip install stable_baselines3 && \
