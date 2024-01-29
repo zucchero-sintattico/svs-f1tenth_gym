@@ -60,4 +60,4 @@ jobs:
         push: true
         file: Dockerfile-gym-ros
         platforms: linux/amd64,linux/arm64
-        tags: manuandru/f1tenth-gym-ros-model-env:lastest,manuandru/f1tenth-gym-ros-model-env:${{ steps.tag.outputs.tag }}
+        tags: manuandru/f1tenth-gym-ros-model-env:latest,manuandru/f1tenth-gym-ros-model-env:${{ steps.tag.outputs.tag }}
