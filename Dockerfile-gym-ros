@@ -77,27 +77,12 @@ COPY model-gym-ros-env/car_node/setup.py /sim_ws/src/car_node/setup.py
 COPY model-gym-ros-env/car_node/car_node/main.py model-gym-ros-env/car_node/car_node/wrapper.py model-gym-ros-env/car_node/car_node/map_utility.py model-gym-ros-env/car_node/car_node/setup.py /sim_ws/src/car_node/car_node/
 COPY train_test /sim_ws/src/car_node/car_node/train_test
 COPY models/* /sim_ws/src/car_node/car_node/models/
+COPY model-gym-ros-env/f1tenth_gym_ros/config/sim.yaml /sim_ws/src/f1tenth_gym_ros/config/sim.yaml
 
 RUN pip install -e /sim_ws/src/car_node/car_node && \
-    # pip install stable_baselines3 && \
-    # pip install 'shimmy>=0.2.1' && \
     source /opt/ros/foxy/setup.bash && \
     cd sim_ws/ && \
     colcon build
-
-# RUN pip install setuptools==65.7.0 && \
-#     pip install -e /sim_ws/src/car_node/car_node && \
-#     pip install stable_baselines3 && \
-#     pip install 'shimmy>=0.2.1' && \
-#     cd sim_ws/ && \
-#     colcon build
-
-#     pip install gym[atari,accept-rom-license]==0.19.0 && \
-#     pip install 'stable-baselines3[extra]' && \
-#     pip install -e /sim_ws/src/car_node/car_node && \
-#     source /opt/ros/foxy/setup.bash && \
-#     cd sim_ws/ && \
-#     colcon build
 
 WORKDIR '/sim_ws'
 ENTRYPOINT ["/bin/bash"]
