@@ -10,6 +10,7 @@
 \usepackage{url}
 \usepackage{hyperref}
 \usepackage{mathtools}
+\usepackage{float}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -76,8 +77,23 @@ e-mail: $\{$manuel.andruccioli, tommaso.patriti, giacomo.totato2$\}$@studio.unib
 \maketitle
 
 \begin{abstract}
-Our abstract
+Autonomous driving represents a vital area of research in the advancement of automotive technology with applications that range from city roads to extreme motor sport environments.
+%
+In the context of racing cars, there is a unique challenge of demand for excellent performance and timely decisions that prompts the adoption of innovative approaches.
+%
+In this work, we focus on the application of Reinforcement Learning in developing an adaptive and high-performance autonomous driving system for racing cars with specific emphasis on using Proximal Policy Optimization (PPO) algorithm known for its stability and ability to handle continuous action spaces.
+%
+This approach seeks to improve the vehicle's ability to follow optimal paths while considering unique features of circuits used in car racing competitions.
+%
+By analyzing and optimizing waypoint-based trajectories, our goal is to show how our autonomous system overfit different tracks and achieve good score in lap time.
+%
+%can dynamically adjust its driving path to fit lane changes with better lap timing and to deal with adverse conditions.
+%
+% The resulting model not only achieved perfect mastering of this track with significant improvement in lap time but also showed positive transfer effects to other tracks.
+%
+% This work contributes to the growing understanding of the challenges and opportunities in autonomous vehicle training, paving way for future practical implementations and advanced research on autonomous driving.
 \end{abstract}
+
 
 \begin{IEEEkeywords}
     Reinforcement Learning, Deep Learning, Autonomous Racing, ROS
@@ -205,7 +221,7 @@ What distinguishes the MPC algorithm is its ability to handle complex constraint
 %
 Thus, it provides an adaptive, optimal control solution.
 %
-However, implementing it may involve significant computational effort, and forecast accuracy highly depends on the precision of a dynamic model.
+However, implementing it may involve significant computational effort and forecast accuracy highly depends on the precision of a dynamic model.
 
 \medskip
 
@@ -215,7 +231,7 @@ However, it may pose challenges in dealing with more complicated dynamics or in 
 
 On the downside, these approaches are often restricted in how well they handle dynamic complexities of race circuits, and machine learning overfitting could be a resource in this particular use case.
 
-One of the most important milestones is the increasing adoption of machine learning algorithms focusing on Reinforcement Learning in order to achieve a driving style as similar to as possible as a human driver, but free from distractions and emotions that can have a negative impact on performance \cite{andru}.
+One of the most important milestones is the increasing adoption of machine learning algorithms focusing on reinforcement learning to achieve a driving style as similar as possible as a human driver, but free of distractions and emotions that can have a negative impact on performance \cite{andru}.
 %
 The use of reward and penalty based techniques along with dynamic interaction between agent and environment have been shown to be effective in enhancing performance in autonomous driving.
 %
@@ -229,7 +245,7 @@ This makes PPO particularly useful in applications where precision and dynamic m
 
 Our approach is different from the existing literature in introducing a specific use of race track waypoints in training maps.
 %
-This decision aims to improve the model's ability to follow optimal trajectories on particular circuits taking into account the unique characteristics of each track.
+This decision aims to improve the model's ability to follow optimal trajectories on particular circuits, taking into account the unique characteristics of each track.
 %
 After the training step, the model will be tested in the a another kind of environment, supported by ROS, in order to achieve a bit more realistic use case.
 
@@ -251,15 +267,15 @@ Next section provides detailed methodology, illustrating how we implemented and 
 
 % \end{itemize}
 
-The project is aimed at providing a two-part integrated architecture. The first part employs use of the Simulator Gym (F1tenthGym) \cite{F1tenthGym}, based on OpenAI Gym \cite{OpenAIGym}, is a toolkit for reinforcement learning.
+The project aims to provide a two-part integrated architecture. The first part employs use of the Simulator Gym (F1tenthGym) \cite{F1tenthGym}, based on OpenAI Gym \cite{OpenAIGym}, is a toolkit for reinforcement learning.
 %
 Then, the model is based on PPO \cite{PPOOpenAI}, a policy gradient methods for reinforcement learning, which alternate between sampling data through interaction with the environment, and optimizing a "surrogate" objective function using stochastic gradient ascent.
 %
 Afterwards, the model is trained using a waypoint-follow approach, in order to complete the circuits.
 
-The second part uses the previously trained model to predict actions that need to be taken by a car inside the ros based simulator employing sensor feedback.
+The second part uses the previously trained model to predict actions that need to be taken by a car inside the ros-based simulator employing sensor feedback.
 
-Through a containerized environment, we aim at giving you an insight into our approach to Reinforcement Learning-based Autonomous Driving, especially when using PPO algorithm.
+Through a containerized environment, we aim to give you insight into our approach to Reinforcement Learning-based Autonomous Driving, especially when using the PPO algorithm.
 
 %
 %
@@ -305,11 +321,11 @@ Through a containerized environment, we aim at giving you an insight into our ap
 \subsubsection{Reward}
 The provided code implements a reward assignment system for an autonomous driving agent in a simulation environment.
 %
-The main components of the system are as follows:
+The main components of the system are as follows.
 
 \begin{itemize}
     \item \textbf{Acceleration Reward:}
-    The reward depends on the agent's acceleration action.
+    The reward depends on the acceleration action of the agent.
     %
     If the acceleration exceeds 2, the reward increases accordingly; otherwise, a fixed reward of 0.02 is added.
 
@@ -324,10 +340,10 @@ The main components of the system are as follows:
     A penalty is subtracted if the distance from the next point on the race line exceeds 3.
 
     \item \textbf{Reward for Lap Completion:}
-    A reward proportional to the deviation from the goal is added upon completing each lap.
+    A reward proportional to the deviation from the goal is added after completing each lap.
 
     \item \textbf{Collision and Time Limit Handling:}
-    A significant penalty is handled in case of collision.
+    A significant penalty is imposed in case of collision.
     %
     If the number of steps exceeds a limit, an end-of-episode event is handled with a penalty.
 
@@ -339,10 +355,11 @@ The acceleration reward and lap completion reward are assigned only when the mod
 %
 %
 \subsubsection{General model}
-The model was trained on 18 different tracks, which were randomly selected with a randomized spawn of the car on the track. As a result, it completes eight tracks with a success rate of 100\%, never completes six tracks, and occasionally completes the remaining five tracks, with variations in success and failure.
-\begin{figure}[h]
+The model was trained on 19 different tracks, which were randomly selected with a randomized spawn of the car on the track. As a result, it completes eight tracks with a success rate of 100\%, never completes six tracks, and occasionally completes the remaining five tracks, with variations in success and failure.
+
+\begin{figure}[ht]
     \centering
-    \includegraphics[width=0.485\textwidth]{img/GeneralModel.png}
+    \includegraphics[width=0.439\textwidth]{img/GeneralModel.png}
     \caption{General model, trained using all the map at the same time}
     \label{fig:general_train}
 \end{figure}
@@ -351,19 +368,20 @@ The model was trained on 18 different tracks, which were randomly selected with 
 %
 %
 \subsubsection{General Model + YasMarina Model}
-At this point, a track that the model consistently failed to complete, specifically YasMarina, was selected. A training cycle was then conducted on this track with the speed optimization active. The resulting model not only mastered YasMarina perfectly, achieving a significant improvement in lap time, but also exhibited positive transfer effects on other tracks. This led to an overall enhancement in the model's performance, indicating that it did not overfit the YasMarina track but instead generalized the knowledge gained from YasMarina to improve its performance on other tracks.
+At this point, a track was selected that the model consistently failed to complete, specifically YasMarina. A training cycle was then conducted on this track with the speed optimization active. The resulting model not only mastered YasMarina perfectly, achieving a significant improvement in lap time, but also exhibited positive transfer effects on other tracks. This led to an overall enhancement in the model's performance, indicating that it did not overfit the YasMarina track but instead generalized the knowledge gained from YasMarina to improve its performance on other tracks.
 
-\begin{figure}[h]
+\begin{figure}[ht]
     \centering
-    \includegraphics[width=0.485\textwidth]{img/General + YasMarina Model.png}
+    %width=0.485
+    \includegraphics[width=0.439\textwidth]{img/General + YasMarina Model.png}
     \caption{General model + YasMarina trained model}
     \label{fig:YasMarina_train}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[ht]
     \centering
     \includegraphics[width=0.485\textwidth]{img/Speed Optimization YasMarina.png}
-    \caption{YasMarina  Speed Optimizazion}
+    \caption{YasMarina Speed Optimization}
     \label{fig:YasMarina_Speed_primization}
 \end{figure}
 
@@ -379,6 +397,8 @@ The application environment is extent to a more complex scenario, based on ROS.
 The project is based on F1tenth Gym Ros project \footnote{\url{https://github.com/f1tenth/f1tenth\_gym\_ros}}, a containerized ROS communication bridge for the environment that allow the use of ROS2 API \cite{Ros2}.
 
 The starting point of building a ros node is defining a class that will declare the communication needs, both sending and receiving messages.
+
+\medskip
 
 \begin{python}
 class PPOModelEvaluator(Node):
@@ -399,15 +419,17 @@ class PPOModelEvaluator(Node):
       self.create_pub(...)
 \end{python}
 
+\medskip
+
 After that we can let the control flow spin to handle the specified callback.
 %
-This node is designed to continuously receive data from the lidar scanner over the vehicle and use the model to predict the optimal actions to be taken based on these inputs.
+This node is designed to continuously receive data from the lidar scanner on the vehicle and use the model to predict the optimal actions to be taken based on these inputs.
 %
-The input data of the model is a vector of $ 1\times1080 $ linear distances between the actual position of the car and first obstacle the light will find over the ray path.
+The input data of the model is a vector of $ 1\times1080 $ linear distances between the actual position of the car and the first obstacle the light will find over the ray path.
 %
-It span over an angle of 360 degrees around the car.
+It spans an angle of 360 degrees around the car.
 %
-When new data are ready to be processed, the model start the prediction and the output is the action that the car will take.
+When new data are ready to be processed, the model starts the prediction and the output is the action that the car will take.
 %
 In this case we can control the steering angle and the speed of the car.
 
@@ -445,7 +467,13 @@ def callback(self, data):
 %
 \subsubsection*{Docker \& multiplatform}
 
-% TODO
+Docker\cite{docker} is a common and efficient practice, particularly for achieving multiplatform compatibility and ensuring consistency across different environments.
+
+The framework it's been use in order to achieve a multiplatform run on ROS2 environment side.
+%
+This it's been possible thank to a build that target a multi platform architecture (\emph{arm64, amd64}).
+%
+The result is published at \url{https://hub.docker.com/r/manuandru/f1tenth-gym-ros-model-env}
 
 %
 %
@@ -469,7 +497,7 @@ def callback(self, data):
 You can find everything about the project at the following link: \url{https://github.com/zucchero-sintattico/svs-f1tenth_gym}.
 
 \begin{enumerate}
-    \item Requirements: python 3.8, docker.
+    \item Requirements: Python 3.8, Docker.
 
     \item \emph{(Optional)} | Create a python environment.
 
@@ -484,7 +512,7 @@ $ (svs-f1tenth_gym/) pip install -e .
 %
 \subsection{Model training API}
 
-The model training API that use F1tenth Gym environment has a CLI in order to:
+The model training API that uses F1tenth Gym environment has a CLI in order to:
 
 \begin{itemize}
     \item Train the model
@@ -531,7 +559,7 @@ $ docker exec \
   -it svs-f1tenth_gym-sim-1 /bin/bash
 \end{verbatim}
 
-    \item Attach to the ROS2 running container and run the simulator:
+    \item Run the simulator:
 \begin{verbatim}
 $ ros2 launch f1tenth_gym_ros \
   gym_bridge_launch.py
@@ -548,29 +576,22 @@ $ ros2 run car_node car
 %
 %
 %
-\section{Discussione}
+\section{Conclusions}
 
-\begin{itemize}
-    \item Interpretazione dei risultati e confronto con la letteratura esistente.
+%\begin{itemize}
+%    \item Riassunto dei risultati principali.
 
-    \item Discussione sulle sfide incontrate e le eventuali limitazioni del vostro approccio.
+%    \item Sottolineare l'importanza del vostro contributo e le potenziali implicazioni nella guida autonoma.
 
-    \item Possibili sviluppi futuri e miglioramenti proposti.
+%\end{itemize}
 
-\end{itemize}
-
-% TODO
-
-\section{Conclusioni}
-
-\begin{itemize}
-    \item Riassunto dei risultati principali.
-
-    \item Sottolineare l'importanza del vostro contributo e le potenziali implicazioni nella guida autonoma.
-
-\end{itemize}
-
-% TODO
+Our study’s outcomes reflect the successful training of the Proximal Policy Optimization (PPO) model on a diverse set of 19 car racing tracks. Randomly choosing and spawning the car randomly in each track helped create a heterogeneous and realistic training environment, challenging the model with a wide variety of driving scenarios.
+The 100\% success rate on eight tracks demonstrates that this is a robust model which can adapt to different situations of driving. On the other hand, Six tracks were not fully completed, while intermittent success was achieved in five remaining ones indicate inherent challenges in autonomous driving where vehicle dynamics and environmental complexities may result into varied results.
+Additionally, regarding the next step it involved choosing one specific track called YasMarina that proved consistently to be problematic for our model. The introduction of an active speed optimization cycle during training at YasMarina has yielded surprising results. Not only did the model achieve perfect mastering of this track with significant improvement in lap time but also showed positive transfer effects to other tracks.
+Given that the model has generalized the knowledge acquired from YasMarina, thereby improving its performance on other tracks, implies a robust learning ability and capacity to extract driving principles that can be applied in different contexts. This occurrence indicates that rather than adapting itself to just one track, the model grasped a wider understanding of driving dynamics.
+The final results show remarkable overall progress of the model. From an inability to complete YasMarina, the model is now able to 100\% complete as many as 14 courses without failing any three tracks and occasionally completing any two remaining courses. This enhancement highlights the power of targeted training strategies and how well it enables models to transfer learned skills from specific contexts into a wider range of driving scenarios.
+Despite these achievements, our study has some limitations. The representativeness of the selected tracks may not fully reflect the diversity of challenges that an autonomous vehicle might face in reality. Furthermore, further research is required to fully understand the impact of active speed optimization and refine the training strategies more.
+In conclusion, PPO model training on diversified set of race tracks followed by a targeted phase in YasMarina has demonstrated model’s robustness, adaptability and transferability. This work contributes to the growing understanding of the challenges and opportunities in autonomous vehicle training, paving way for future practical implementations and advanced research on autonomous driving.
 
 \bibliographystyle{IEEEtran}
 \bibliography{bibliography}
