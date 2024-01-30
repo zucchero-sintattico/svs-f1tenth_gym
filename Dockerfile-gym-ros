@@ -74,10 +74,13 @@ RUN echo "source /opt/ros/foxy/setup.bash" >> ~/.bashrc && \
     mv f1tenth_racetracks /sim_ws/src/car_node/car_node/map/
 
 COPY model-gym-ros-env/car_node/setup.py /sim_ws/src/car_node/setup.py
-COPY model-gym-ros-env/car_node/car_node/main.py model-gym-ros-env/car_node/car_node/wrapper.py model-gym-ros-env/car_node/car_node/map_utility.py model-gym-ros-env/car_node/car_node/setup.py /sim_ws/src/car_node/car_node/
+COPY model-gym-ros-env/car_node/car_node/main.py model-gym-ros-env/car_node/car_node/setup.py /sim_ws/src/car_node/car_node/
+
+COPY model-gym-ros-env/f1tenth_gym_ros/config/sim.yaml /sim_ws/src/f1tenth_gym_ros/config/sim.yaml
+COPY model-gym-ros-env/f1tenth_gym_ros/f1tenth_gym_ros/gym_bridge.py /sim_ws/src/f1tenth_gym_ros/f1tenth_gym_ros/gym_bridge.py
+
 COPY train_test /sim_ws/src/car_node/car_node/train_test
 COPY models/* /sim_ws/src/car_node/car_node/models/
-COPY model-gym-ros-env/f1tenth_gym_ros/config/sim.yaml /sim_ws/src/f1tenth_gym_ros/config/sim.yaml
 
 RUN pip install -e /sim_ws/src/car_node/car_node && \
     source /opt/ros/foxy/setup.bash && \
