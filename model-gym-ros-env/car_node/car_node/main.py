@@ -9,7 +9,6 @@ from sensor_msgs.msg import LaserScan
 from ackermann_msgs.msg import AckermannDriveStamped
 
 from stable_baselines3 import PPO
-from car_node.wrapper import convert_range
 
 device = 'cpu'
 
